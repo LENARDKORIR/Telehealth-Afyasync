@@ -13,7 +13,12 @@ const NAVIGATION_ITEMS = [
   { path: '/settings', label: 'Settings', icon: '⚙️', roles: ['admin', 'doctor', 'patient'] },
 ];
 
-export const Sidebar = ({ isOpen }: { isOpen: boolean }) => {
+interface SidebarProps {
+  isOpen: boolean;
+  onNavigate: () => void;
+}
+
+export const Sidebar = ({ isOpen, onNavigate }: SidebarProps) => {
   const { user } = useAuth();
 
   const visibleItems = NAVIGATION_ITEMS.filter(
@@ -24,20 +29,21 @@ export const Sidebar = ({ isOpen }: { isOpen: boolean }) => {
     <aside
       className={`${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } fixed md:static md:translate-x-0 left-0 top-0 w-64 h-screen bg-gray-900 text-white transition-transform duration-300 z-40 mt-16 md:mt-0`}
+      } fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 overflow-y-auto bg-slate-950 text-white shadow-2xl transition-transform duration-300 md:static md:top-0 md:h-auto md:w-64 md:translate-x-0 md:shadow-none`}
     >
-      <nav className="p-6 space-y-2">
+      <nav className="space-y-2 p-4 sm:p-6">
         {visibleItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+              `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
                 isActive
                   ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800'
+                  : 'text-slate-300 hover:bg-white/8 hover:text-white'
               }`
             }
+            onClick={onNavigate}
           >
             <span className="text-xl">{item.icon}</span>
             <span>{item.label}</span>

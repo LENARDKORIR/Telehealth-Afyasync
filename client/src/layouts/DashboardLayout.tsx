@@ -2,7 +2,8 @@
  * Dashboard layout
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Sidebar } from '../components/Sidebar';
 import { OfflineBanner } from '../components/OfflineBanner';
@@ -13,20 +14,31 @@ interface DashboardLayoutProps {
 
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   return (
-    <div className="flex flex-col h-screen">
-      <Navbar />
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <Navbar
+        onMenuToggle={() => setSidebarOpen((current) => !current)}
+      />
       <OfflineBanner />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} />
-        <main className="flex-1 overflow-auto bg-gray-50">
+      <div className="relative flex min-h-[calc(100vh-4rem)]">
+        {sidebarOpen && (
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="md:hidden fixed bottom-6 right-6 z-40 w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg"
-          >
-            ☰
-          </button>
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 z-30 bg-slate-950/50 backdrop-blur-[2px] md:hidden"
+          />
+        )}
+
+        <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
+
+        <main className="flex-1 overflow-y-auto bg-slate-50">
           {children}
         </main>
       </div>

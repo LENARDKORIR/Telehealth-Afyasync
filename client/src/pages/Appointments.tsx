@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
-import { ENDPOINTS } from '../utils/constants';
 
 interface Appointment {
   id: string;
