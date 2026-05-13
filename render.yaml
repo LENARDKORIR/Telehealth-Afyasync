@@ -1,0 +1,27 @@
+# render.yaml - blueprint to create API and frontend services on Render
+services:
+  - type: web
+    name: afyasyncc-api
+    env: node
+    repoName: NbrMx3/Afyasync
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    root: server
+    envVars:
+      - key: NODE_ENV
+        value: production
+    secrets:
+      - key: DATABASE_URL
+
+  - type: static
+    name: afyasyncc-web
+    env: static
+    repoName: NbrMx3/Afyasync
+    plan: free
+    buildCommand: npm install && npm run build
+    publishPath: client/dist
+    root: client
+    envVars:
+      - key: VITE_API_URL
+        value: https://afyasyncc-api.onrender.com/api
