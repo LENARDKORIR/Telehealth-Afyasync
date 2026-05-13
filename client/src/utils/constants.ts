@@ -2,7 +2,11 @@
  * Constants for the application
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const rawApiBaseUrl = import.meta.env.VITE_API_URL?.trim();
+
+const isLocalhostUrl = (value: string) => /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?\/api\/?$/i.test(value);
+
+export const API_BASE_URL = rawApiBaseUrl && !isLocalhostUrl(rawApiBaseUrl) ? rawApiBaseUrl : '/api';
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Secure Telehealth Portal';
 
 // Token storage keys
