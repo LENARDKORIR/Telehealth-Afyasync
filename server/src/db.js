@@ -11,8 +11,13 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is missing. Add it to server/.env or deployment environment variables.');
 }
 
+// Append sslmode if not already present in connection string
+const urlWithSSL = connectionString.includes('sslmode=')
+  ? connectionString
+  : connectionString + (connectionString.includes('?') ? '&' : '?') + 'sslmode=require';
+
 export const pool = new Pool({
-  connectionString,
+  connectionString: urlWithSSL,
   ssl: {
     rejectUnauthorized: false,
   },
