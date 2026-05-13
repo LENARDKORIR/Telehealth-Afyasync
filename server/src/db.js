@@ -11,10 +11,10 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is missing. Add it to server/.env or deployment environment variables.');
 }
 
-// Append sslmode if not already present in connection string
-const urlWithSSL = connectionString.includes('sslmode=')
+// Keep current SSL behavior, but opt into libpq compatibility to avoid the pg warning.
+const urlWithSSL = connectionString.includes('uselibpqcompat=true')
   ? connectionString
-  : connectionString + (connectionString.includes('?') ? '&' : '?') + 'sslmode=require';
+  : connectionString + (connectionString.includes('?') ? '&' : '?') + 'uselibpqcompat=true';
 
 export const pool = new Pool({
   connectionString: urlWithSSL,
