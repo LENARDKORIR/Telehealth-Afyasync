@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { AppRoutes } from './routes/AppRoutes';
+import { InstallPrompt } from './components/InstallPrompt';
 import { db } from './database/indexedDB';
 import { syncService } from './services/syncService';
 
@@ -28,7 +29,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppRoutes />
+        <>
+          <AppRoutes />
+          <InstallPrompt />
+        </>
       </AuthProvider>
     </Router>
   );

@@ -8,27 +8,50 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'Secure Telehealth Portal',
         short_name: 'Telehealth',
-        description: 'Secure telehealth portal with offline support',
+        description: 'HIPAA-compliant telehealth portal with offline-first patient care, appointments, and medical records',
         theme_color: '#2563eb',
         background_color: '#ffffff',
         display: 'standalone',
         scope: '/',
         start_url: '/',
+        orientation: 'portrait-primary',
+        categories: ['medical', 'productivity'],
         icons: [
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any maskable',
+          },
+          {
+            src: 'apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
             purpose: 'any',
+          },
+        ],
+        screenshots: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            form_factor: 'narrow',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            form_factor: 'wide',
           },
         ],
       },
