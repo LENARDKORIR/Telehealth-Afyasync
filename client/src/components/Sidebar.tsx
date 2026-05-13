@@ -29,7 +29,7 @@ export const Sidebar = ({ isOpen, onNavigate }: SidebarProps) => {
     <aside
       className={`${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 overflow-y-auto bg-slate-950 text-white shadow-2xl transition-transform duration-300 md:static md:top-0 md:h-auto md:w-64 md:translate-x-0 md:shadow-none`}
+      } fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-72 overflow-y-auto bg-[#8e171b] text-white shadow-2xl transition-transform duration-300 md:static md:top-0 md:h-auto md:w-64 md:translate-x-0 md:shadow-none`}
     >
       <nav className="space-y-2 p-4 sm:p-6">
         {visibleItems.map((item) => (
@@ -39,8 +39,8 @@ export const Sidebar = ({ isOpen, onNavigate }: SidebarProps) => {
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-white/8 hover:text-white'
+                  ? 'bg-white/15 text-white'
+                  : 'text-rose-50/85 hover:bg-white/10 hover:text-white'
               }`
             }
             onClick={onNavigate}

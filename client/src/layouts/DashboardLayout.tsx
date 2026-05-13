@@ -21,7 +21,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#faf4f0] text-slate-900">
       <Navbar
         onMenuToggle={() => setSidebarOpen((current) => !current)}
       />
@@ -38,7 +38,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <Sidebar isOpen={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
 
-        <main className="flex-1 overflow-y-auto bg-slate-50">
+        <main className="flex-1 overflow-y-auto bg-[#faf4f0]">
           {children}
         </main>
       </div>

@@ -44,39 +44,42 @@ export const Login = () => {
 
   return (
     <AuthLayout>
-      <div className="bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">Welcome Back</h1>
-        <p className="text-center text-gray-600 mb-6">Secure Telehealth Portal</p>
+      <div className="rounded-[2rem] border border-white/70 bg-white/90 p-8 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-10">
+        <div className="mb-8 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-rose-700">Sign in</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Welcome back</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-600">Access your secure clinical workspace.</p>
+        </div>
 
         {(error || validationError) && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
+          <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error || validationError}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Email</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">Email</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="you@example.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Password</label>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">Password</label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               placeholder="••••••••"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none transition"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
               disabled={loading}
             />
           </div>
@@ -84,18 +87,18 @@ export const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#8e171b] px-4 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#741215] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading && <Loader size="sm" />}
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-6">
+        <p className="mt-6 text-center text-sm text-slate-600">
           Don't have an account?{' '}
           <button
             onClick={() => navigate('/register')}
-            className="text-blue-600 hover:underline font-semibold"
+            className="font-semibold text-rose-700 hover:underline"
           >
             Register
           </button>

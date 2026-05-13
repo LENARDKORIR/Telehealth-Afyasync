@@ -22,18 +22,18 @@ export const Navbar = ({ onMenuToggle }: NavbarProps) => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 border-b border-rose-950/10 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onMenuToggle}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm transition hover:bg-slate-800 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#8e171b] text-white shadow-sm transition hover:bg-[#741215] md:hidden"
           >
             ☰
           </button>
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#8e171b] shadow-sm">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -49,8 +49,8 @@ export const Navbar = ({ onMenuToggle }: NavbarProps) => {
             </svg>
           </div>
           <div>
-            <h1 className="text-base font-bold text-slate-900 sm:text-xl">Telehealth Portal</h1>
-            <p className="hidden text-xs text-slate-500 sm:block">Responsive PWA dashboard</p>
+            <h1 className="text-base font-black tracking-tight text-slate-900 sm:text-xl">Afyasync Portal</h1>
+            <p className="hidden text-xs text-slate-500 sm:block">Clinical workspace with Tailwind styling</p>
           </div>
         </div>
 
@@ -61,7 +61,7 @@ export const Navbar = ({ onMenuToggle }: NavbarProps) => {
           </div>
           <button
             onClick={() => setIsMenuOpen((current) => !current)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-bold text-white transition hover:bg-blue-700"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8e171b] font-bold text-white transition hover:bg-[#741215]"
           >
             {getInitials(user?.name || 'User')}
           </button>
