@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { ensureDatabaseSchema, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
+import { createUser, getUserByEmail, verifyPassword, signToken, getUserById } from './auth.js';
 
 dotenv.config();
 
@@ -71,6 +72,56 @@ app.post('/api/patients', async (req, res) => {
     res.status(500).json({
       message: error instanceof Error ? error.message : 'Failed to create patient',
     });
+  }
+});
+
+// Auth routes
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { id, name, email, password, role } = req.body;
+    if (!email || !password || !name || !role) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const existing = await getUserByEmail(email);
+    if (existing) return res.status(409).json({ message: 'Email already registered' });
+
+    const userId = id || `user-${Date.now()}`;
+    const user = await createUser({ id: userId, name, email, password, role });
+    const token = signToken(user);
+    return res.status(201).json({ success: true, token, refreshToken: token, user, message: 'Registered' });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Registration failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'Missing credentials' });
+
+    const user = await verifyPassword(email, password);
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const token = signToken(user);
+    return res.json({ success: true, token, refreshToken: token, user, message: 'Logged in' });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Login failed' });
+  }
+});
+
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ message: 'Missing refresh token' });
+    const payload = verifyToken(refreshToken);
+    if (!payload) return res.status(401).json({ message: 'Invalid refresh token' });
+    const user = await getUserById(payload.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const token = signToken(user);
+    return res.json({ success: true, token, refreshToken: token, user, message: 'Token refreshed' });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Refresh failed' });
   }
 });
 
