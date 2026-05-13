@@ -8,6 +8,8 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const TOKEN_EXPIRY = '7d';
 
+const normalizeEmail = (email) => email.trim().toLowerCase();
+
 const toUser = (row) => ({
   id: row.id,
   email: row.email,
@@ -19,7 +21,7 @@ const toUser = (row) => ({
 });
 
 export async function getUserByEmail(email) {
-  const res = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+  const res = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1', [normalizeEmail(email)]);
   return res.rows[0] ? toUser(res.rows[0]) : null;
 }
 
@@ -29,18 +31,19 @@ export async function getUserById(id) {
 }
 
 export async function createUser({ id, name, email, password, role }) {
+  const normalizedEmail = normalizeEmail(email);
   const hashed = await bcrypt.hash(password, 10);
   const now = new Date().toISOString();
   const res = await pool.query(
     `INSERT INTO users (id, name, email, password, role, created_at, updated_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-    [id, name, email, hashed, role, now, now]
+    [id, name, normalizedEmail, hashed, role, now, now]
   );
   return toUser(res.rows[0]);
 }
 
 export async function verifyPassword(email, password) {
-  const res = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+  const res = await pool.query('SELECT * FROM users WHERE LOWER(email) = $1', [normalizeEmail(email)]);
   const row = res.rows[0];
   if (!row) return null;
   const ok = await bcrypt.compare(password, row.password);
