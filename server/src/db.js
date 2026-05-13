@@ -51,4 +51,33 @@ export async function ensureDatabaseSchema() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS appointments (
+      id TEXT PRIMARY KEY,
+      patient_id TEXT NOT NULL,
+      doctor_id TEXT NOT NULL,
+      appointment_date TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('scheduled', 'completed', 'cancelled', 'no-show')),
+      reason TEXT NOT NULL,
+      notes TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS medical_records (
+      id TEXT PRIMARY KEY,
+      patient_id TEXT NOT NULL,
+      doctor_id TEXT NOT NULL,
+      diagnosis TEXT NOT NULL,
+      symptoms TEXT[],
+      prescription TEXT,
+      notes TEXT NOT NULL,
+      record_date TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
 }

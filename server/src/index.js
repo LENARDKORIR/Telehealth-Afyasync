@@ -4,6 +4,8 @@ import cors from 'cors';
 import { ensureDatabaseSchema, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
 import { createUser, getUserByEmail, verifyPassword, signToken, getUserById } from './auth.js';
+import { createAppointment, deleteAppointment, getAppointmentById, listAppointmentsByPatient, updateAppointment } from './appointments.js';
+import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
 
 dotenv.config();
 
@@ -154,6 +156,104 @@ app.delete('/api/patients/:id', async (req, res) => {
     return res.status(500).json({
       message: error instanceof Error ? error.message : 'Failed to delete patient',
     });
+  }
+});
+
+// Patient-specific appointments
+app.get('/api/appointments/patient/:patientId', async (req, res) => {
+  try {
+    const appointments = await listAppointmentsByPatient(req.params.patientId);
+    res.json({ data: appointments });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch appointments' });
+  }
+});
+
+app.get('/api/appointments/:id', async (req, res) => {
+  try {
+    const appointment = await getAppointmentById(req.params.id);
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+    res.json({ data: appointment });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch appointment' });
+  }
+});
+
+app.post('/api/appointments', async (req, res) => {
+  try {
+    const appointment = await createAppointment(req.body);
+    res.status(201).json({ data: appointment });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create appointment' });
+  }
+});
+
+app.put('/api/appointments/:id', async (req, res) => {
+  try {
+    const appointment = await updateAppointment(req.params.id, req.body);
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+    res.json({ data: appointment });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update appointment' });
+  }
+});
+
+app.delete('/api/appointments/:id', async (req, res) => {
+  try {
+    const deleted = await deleteAppointment(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Appointment not found' });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete appointment' });
+  }
+});
+
+// Patient-specific medical records
+app.get('/api/medical-records/patient/:patientId', async (req, res) => {
+  try {
+    const records = await listMedicalRecordsByPatient(req.params.patientId);
+    res.json({ data: records });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch medical records' });
+  }
+});
+
+app.get('/api/medical-records/:id', async (req, res) => {
+  try {
+    const record = await getRecordById(req.params.id);
+    if (!record) return res.status(404).json({ message: 'Medical record not found' });
+    res.json({ data: record });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch medical record' });
+  }
+});
+
+app.post('/api/medical-records', async (req, res) => {
+  try {
+    const record = await createMedicalRecord(req.body);
+    res.status(201).json({ data: record });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create medical record' });
+  }
+});
+
+app.put('/api/medical-records/:id', async (req, res) => {
+  try {
+    const record = await updateMedicalRecord(req.params.id, req.body);
+    if (!record) return res.status(404).json({ message: 'Medical record not found' });
+    res.json({ data: record });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update medical record' });
+  }
+});
+
+app.delete('/api/medical-records/:id', async (req, res) => {
+  try {
+    const deleted = await deleteMedicalRecord(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Medical record not found' });
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete medical record' });
   }
 });
 
