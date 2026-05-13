@@ -24,10 +24,12 @@ npm run dev
 Copy `.env.example` to `.env` and adjust values as needed:
 
 ```env
-VITE_API_URL=http://localhost:8000/api
+VITE_API_URL=/api
 VITE_APP_NAME=Secure Telehealth Portal
 VITE_ENCRYPTION_KEY=your-encryption-key-here-change-in-production
 ```
+
+Use `/api` during local development so the Vite proxy forwards requests to the backend. If you deploy the frontend and backend separately, replace it with the full backend URL for that environment.
 
 ## Project Structure
 
