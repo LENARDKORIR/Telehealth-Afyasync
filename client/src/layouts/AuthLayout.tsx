@@ -18,13 +18,13 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
           <div className="grid w-full items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="hidden lg:block">
-              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-rose-100/85">
+              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-slate-900">
                 Secure Telehealth Portal
               </p>
-              <h1 className="mt-4 max-w-xl text-5xl font-black tracking-tight text-white xl:text-6xl">
+              <h1 className="mt-4 max-w-xl text-5xl font-black tracking-tight text-slate-900 xl:text-6xl">
                 A cleaner clinical workspace for patients and care teams.
               </h1>
-              <p className="mt-6 max-w-xl text-lg leading-8 text-rose-50/90">
+              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-800">
                 The sign-in experience now matches the refreshed landing page with a warm,
                 medical-themed Tailwind composition.
               </p>
