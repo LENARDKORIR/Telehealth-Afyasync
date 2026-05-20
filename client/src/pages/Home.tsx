@@ -111,6 +111,14 @@ export const Home = () => {
               </button>
             </div>
           </div>
+
+          {/* Decorative SVG wave */}
+          <div className="hero-wave-svg -mt-12">
+            <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="w-full h-28" aria-hidden="true">
+              <path d="M0,32 C120,64 360,96 720,88 C1080,80 1320,40 1440,24 L1440,120 L0,120 Z" fill="rgba(255,255,255,0.85)" />
+            </svg>
+          </div>
+
         </section>
 
         <section className="mx-auto -mt-8 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

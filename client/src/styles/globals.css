@@ -217,3 +217,36 @@ canvas {
   animation: fadeIn 0.6s ease forwards;
 }
 
+/* SVG wave styling and responsive spacing tweaks */
+.hero-wave-svg {
+  line-height: 0;
+}
+
+.hero-wave-svg svg {
+  display: block;
+}
+
+/* Make the hero slightly taller on large screens and adjust paddings */
+@media (min-width: 1024px) {
+  .hero-wave {
+    padding-top: 5.5rem; /* lg:py-20 equivalent tweak */
+    padding-bottom: 6.5rem;
+  }
+
+  .glass-card {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-wave {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+
+  .glass-card {
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+}
+
