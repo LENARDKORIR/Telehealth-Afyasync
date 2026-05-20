@@ -13,6 +13,7 @@ const serviceCards = [
       'Talk to a medical provider anytime, day or night. Whether it is symptoms, allergies or infections, get the care you need from anywhere.',
     link: 'Learn more →',
     tone: 'card-tile-1',
+    image: '/landing-images/care-247.svg',
   },
   {
     title: 'Primary Care',
@@ -20,6 +21,7 @@ const serviceCards = [
       'Stay on top of your health with board-certified providers supporting your checkups, preventative care and prescriptions.',
     link: 'Learn more →',
     tone: 'card-tile-2',
+    image: '/landing-images/primary-care.svg',
   },
   {
     title: 'Mental Health',
@@ -27,6 +29,7 @@ const serviceCards = [
       'Access a network of licensed therapists and psychiatrists to help navigate anxiety, stress, depression and more.',
     link: 'Teladoc Health Mental Health →',
     tone: 'card-tile-3',
+    image: '/landing-images/mental-health.svg',
   },
   {
     title: 'Condition Management',
@@ -34,6 +37,7 @@ const serviceCards = [
       'Get personalized coaching and connected devices for diabetes, weight and blood pressure management built to last.',
     link: 'Diabetes →',
     tone: 'card-tile-4',
+    image: '/landing-images/condition-management.svg',
   },
   {
     title: 'Specialty Care',
@@ -41,6 +45,7 @@ const serviceCards = [
       'Consult with specialists to review your case and guide you through everything from minor concerns to major diagnoses.',
     link: 'Dermatology →',
     tone: 'card-tile-5',
+    image: '/landing-images/specialty-care.svg',
   },
   {
     title: 'Everyday Healthy Habits',
@@ -48,6 +53,7 @@ const serviceCards = [
       'Build healthier habits with trained professionals who support your nutrition, fitness and sleep goals.',
     link: 'Nutrition →',
     tone: 'card-tile-6',
+    image: '/landing-images/healthy-habits.svg',
   },
 ];
 
@@ -122,6 +128,7 @@ export const Home = () => {
                 className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
               >
                 <div className={`card-photo ${card.tone}`}>
+                  <img src={card.image} alt={card.title} className="card-photo-image" />
                   <div className="card-photo-overlay" />
                   <div className="card-photo-copy">
                     <span>{card.title}</span>

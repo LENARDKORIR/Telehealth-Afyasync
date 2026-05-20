@@ -1,0 +1,38 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="110" y1="90" x2="1080" y2="820" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#BFDDF0"/>
+      <stop offset="0.5" stop-color="#EAF7FF"/>
+      <stop offset="1" stop-color="#F8FCFF"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1200" height="900" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#2A4D78" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="900" rx="48" fill="url(#bg)"/>
+  <rect x="120" y="360" width="948" height="360" rx="42" fill="#FFFFFF" opacity="0.34" filter="url(#shadow)"/>
+  <rect x="468" y="262" width="246" height="394" rx="38" fill="#E8F2F7"/>
+  <rect x="510" y="315" width="162" height="24" rx="12" fill="#BFD0E0"/>
+  <rect x="510" y="360" width="132" height="16" rx="8" fill="#C9D8E6"/>
+  <rect x="510" y="398" width="180" height="16" rx="8" fill="#C9D8E6"/>
+  <rect x="510" y="446" width="112" height="32" rx="16" fill="#6A45F0"/>
+  <circle cx="597" cy="570" r="80" fill="#B7D7EA"/>
+  <circle cx="597" cy="564" r="52" fill="#3C7FA8"/>
+  <path d="M565 564H629" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <path d="M597 532V596" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <path d="M168 546C210 496 282 478 346 490C410 502 456 548 474 604" stroke="#7AC3EA" stroke-width="22" stroke-linecap="round"/>
+  <rect x="198" y="460" width="120" height="150" rx="48" fill="#F8D8C5"/>
+  <rect x="846" y="454" width="118" height="154" rx="48" fill="#F8D8C5"/>
+  <rect x="860" y="410" width="92" height="120" rx="40" fill="#D8B39A"/>
+  <rect x="214" y="412" width="90" height="126" rx="40" fill="#D8B39A"/>
+  <circle cx="268" cy="434" r="26" fill="#F2C8AA"/>
+  <circle cx="906" cy="434" r="26" fill="#F2C8AA"/>
+  <path d="M259 560C286 592 317 608 352 610" stroke="#3C7FA8" stroke-width="10" stroke-linecap="round"/>
+  <path d="M898 558C869 592 839 608 802 610" stroke="#3C7FA8" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="936" cy="226" r="18" fill="#6A45F0">
+    <animate attributeName="cy" values="226;206;226" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="920" cy="240" r="10" fill="#6A45F0" opacity="0.6">
+    <animate attributeName="r" values="10;18;10" dur="4s" repeatCount="indefinite"/>
+  </circle>
+</svg>
