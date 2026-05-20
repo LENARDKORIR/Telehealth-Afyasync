@@ -62,6 +62,19 @@ const footerColumns = [
   },
 ];
 
+const storeLinks = [
+  {
+    label: 'App Store',
+    subtitle: 'Download on the',
+    href: 'https://apps.apple.com/us/search?term=Telehealth',
+  },
+  {
+    label: 'Google Play',
+    subtitle: 'Get it on',
+    href: 'https://play.google.com/store/search?q=Telehealth&c=apps',
+  },
+];
+
 const serviceCards = [
   {
     title: '24/7 Care',
@@ -326,13 +339,29 @@ export const Home = () => {
 
             <div className="mt-12 flex flex-col gap-4 border-t border-slate-900/10 pt-6 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
               <p>© 2026 Telehealth, Inc. PL015954.A</p>
-              <div className="flex gap-3">
-                <span className="rounded-full border border-slate-900/10 bg-slate-50 px-4 py-2 font-semibold">
-                  App Store
-                </span>
-                <span className="rounded-full border border-slate-900/10 bg-slate-50 px-4 py-2 font-semibold">
-                  Google Play
-                </span>
+              <div className="flex flex-wrap gap-3">
+                {storeLinks.map((store) => (
+                  <a
+                    key={store.label}
+                    href={store.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group inline-flex min-w-[180px] items-center gap-3 rounded-2xl border border-slate-900/10 bg-slate-950 px-4 py-3 text-white shadow-[0_12px_24px_rgba(15,23,42,0.2)] transition hover:-translate-y-0.5 hover:bg-black"
+                    aria-label={`${store.subtitle} ${store.label}`}
+                  >
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-lg">
+                      {store.label === 'App Store' ? '' : '▶'}
+                    </span>
+                    <span className="leading-tight">
+                      <span className="block text-[10px] uppercase tracking-[0.22em] text-white/70">
+                        {store.subtitle}
+                      </span>
+                      <span className="block text-lg font-semibold">
+                        {store.label}
+                      </span>
+                    </span>
+                  </a>
+                ))}
               </div>
             </div>
           </div>
