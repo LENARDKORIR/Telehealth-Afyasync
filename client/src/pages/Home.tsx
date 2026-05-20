@@ -2,9 +2,65 @@
  * Home page
  */
 
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const quickLinks = ['Emergency', 'Appointments', 'Contact', 'Hours'];
+
+const footerColumns = [
+  {
+    title: 'Individuals',
+    links: [
+      { label: '24/7 Care', to: '/register' },
+      { label: 'Mental Health', to: '/register' },
+      { label: 'Weight Management', to: '/patients' },
+      { label: 'Diabetes Management', to: '/patients' },
+      { label: 'Hypertension Management', to: '/patients' },
+      { label: 'Specialty & Wellness', to: '/appointments' },
+      { label: 'Primary Care', to: '/login' },
+    ],
+  },
+  {
+    title: 'Organizations',
+    links: [
+      { label: 'Our Approach', to: '/' },
+      { label: 'Employers', to: '/register' },
+      { label: 'Health Plans', to: '/dashboard' },
+      { label: 'Hospitals & Health Systems', to: '/dashboard' },
+      { label: 'Resource Center', to: '/reports' },
+    ],
+  },
+  {
+    title: 'Clinicians',
+    links: [
+      { label: 'Commitment to Quality', to: '/settings' },
+      { label: 'Provider Careers', to: '/login' },
+    ],
+  },
+  {
+    title: 'Who we are',
+    links: [
+      { label: 'Our Company', to: '/' },
+      { label: 'Our Impact', to: '/dashboard' },
+      { label: 'Leadership', to: '/dashboard' },
+      { label: 'Careers', to: '/register' },
+      { label: 'Industry Events', to: '/reports' },
+      { label: 'Newsroom', to: '/reports' },
+      { label: 'Investors', to: '/reports' },
+    ],
+  },
+  {
+    title: 'Helpful Links',
+    links: [
+      { label: 'Contact Us', to: '/login' },
+      { label: 'Health Library', to: '/reports' },
+      { label: 'Help Center', to: '/settings' },
+      { label: 'Legal, Privacy & Compliance', to: '/settings' },
+      { label: 'Your Privacy Choices', to: '/settings' },
+      { label: 'Language Assistance Services', to: '/settings' },
+      { label: 'Community Guidelines', to: '/settings' },
+    ],
+  },
+];
 
 const serviceCards = [
   {
@@ -252,63 +308,20 @@ export const Home = () => {
                 </p>
               </div>
 
-              <div>
-                <h3 className="text-lg font-black text-[#3d2d7d]">Individuals</h3>
-                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
-                  <li>24/7 Care</li>
-                  <li>Mental Health</li>
-                  <li>Weight Management</li>
-                  <li>Diabetes Management</li>
-                  <li>Hypertension Management</li>
-                  <li>Specialty &amp; Wellness</li>
-                  <li>Primary Care</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-[#3d2d7d]">Organizations</h3>
-                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
-                  <li>Our Approach</li>
-                  <li>Employers</li>
-                  <li>Health Plans</li>
-                  <li>Hospitals &amp; Health Systems</li>
-                  <li>Resource Center</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-[#3d2d7d]">Clinicians</h3>
-                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
-                  <li>Commitment to Quality</li>
-                  <li>Provider Careers</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-[#3d2d7d]">Who we are</h3>
-                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
-                  <li>Our Company</li>
-                  <li>Our Impact</li>
-                  <li>Leadership</li>
-                  <li>Careers</li>
-                  <li>Industry Events</li>
-                  <li>Newsroom</li>
-                  <li>Investors</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-black text-[#3d2d7d]">Helpful Links</h3>
-                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
-                  <li>Contact Us</li>
-                  <li>Health Library</li>
-                  <li>Help Center</li>
-                  <li>Legal, Privacy &amp; Compliance</li>
-                  <li>Your Privacy Choices</li>
-                  <li>Language Assistance Services</li>
-                  <li>Community Guidelines</li>
-                </ul>
-              </div>
+              {footerColumns.map((column) => (
+                <div key={column.title}>
+                  <h3 className="text-lg font-black text-[#3d2d7d]">{column.title}</h3>
+                  <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
+                    {column.links.map((link) => (
+                      <li key={link.label}>
+                        <Link to={link.to} className="transition hover:text-[#6a45f0] hover:underline">
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
 
             <div className="mt-12 flex flex-col gap-4 border-t border-slate-900/10 pt-6 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
