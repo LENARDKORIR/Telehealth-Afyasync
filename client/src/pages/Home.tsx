@@ -113,9 +113,12 @@ export const Home = () => {
           </div>
 
           {/* Decorative SVG wave */}
-          <div className="hero-wave-svg -mt-12">
+          <div className="hero-wave-svg -mt-12 wave-style-2">
             <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="w-full h-28" aria-hidden="true">
-              <path d="M0,32 C120,64 360,96 720,88 C1080,80 1320,40 1440,24 L1440,120 L0,120 Z" fill="rgba(255,255,255,0.85)" />
+              {/* Default wave (gentle peaks) */}
+              <path className="wave-default" d="M0,32 C120,64 360,96 720,88 C1080,80 1320,40 1440,24 L1440,120 L0,120 Z" />
+              {/* Alternate wave (smooth rolling) */}
+              <path className="wave-alt" d="M0,48 C240,96 480,16 720,40 C960,64 1200,120 1440,56 L1440,120 L0,120 Z" />
             </svg>
           </div>
 
