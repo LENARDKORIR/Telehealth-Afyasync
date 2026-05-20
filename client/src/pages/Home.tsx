@@ -80,7 +80,7 @@ export const Home = () => {
       </header>
 
       <main>
-        <section className="bg-[#8e171b] px-4 py-16 text-white sm:px-6 lg:px-8 lg:py-20">
+        <section className="hero-wave px-4 py-16 text-white sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-6xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.35em] text-rose-100/90">
               Tailwind-powered interface
@@ -94,18 +94,18 @@ export const Home = () => {
               scanning on desktop and mobile.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 hero-animated">
               <button
                 type="button"
                 onClick={() => navigate('/register')}
-                className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-[#8e171b] transition hover:-translate-y-0.5"
+                className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-[#8e171b] transition glow-btn primary"
               >
                 Create account
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="inline-flex h-12 items-center justify-center rounded-full border border-white/25 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-white/25 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur transition glow-btn"
               >
                 Sign in
               </button>
@@ -118,7 +118,7 @@ export const Home = () => {
             {serviceCards.map((card) => (
               <article
                 key={card.title}
-                className="overflow-hidden rounded-[2rem] border border-rose-950/10 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)]"
+                className="overflow-hidden rounded-[2rem] border border-rose-950/10 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] glass-card section-fade"
               >
                 <div className={`h-56 bg-gradient-to-br ${card.accent} p-5`}>
                   <div className="flex h-full items-end justify-between rounded-[1.5rem] border border-white/60 bg-white/40 p-4 backdrop-blur-sm">
