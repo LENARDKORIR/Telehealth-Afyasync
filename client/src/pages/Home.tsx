@@ -3,6 +3,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 
 const serviceCards = [
   {
@@ -35,6 +36,37 @@ const quickLinks = ['Emergency', 'Appointments', 'Contact', 'Hours'];
 
 export const Home = () => {
   const navigate = useNavigate();
+  const [waveAlt, setWaveAlt] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('afy_wave') === 'alt';
+    } catch {
+      return true;
+    }
+  });
+
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('afy_theme') === 'dark';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('afy_wave', waveAlt ? 'alt' : 'default');
+    } catch {}
+  }, [waveAlt]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('afy_theme', darkMode ? 'dark' : 'light');
+    } catch {}
+
+    const cls = 'dark-mode';
+    if (darkMode) document.documentElement.classList.add(cls);
+    else document.documentElement.classList.remove(cls);
+  }, [darkMode]);
 
   return (
     <div className="min-h-screen bg-[#faf4f0] text-slate-900">
@@ -56,7 +88,7 @@ export const Home = () => {
           </div>
         </div>
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-full border border-rose-950/10 bg-gradient-to-br from-rose-100 to-amber-50 text-2xl shadow-sm">
               🏥
@@ -69,13 +101,33 @@ export const Home = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => navigate('/login')}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-rose-950/10 bg-slate-900 px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
-          >
-            Enter portal
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              title="Toggle hero wave"
+              onClick={() => setWaveAlt((v) => !v)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            >
+              🌊
+            </button>
+
+            <button
+              type="button"
+              title="Toggle theme"
+              onClick={() => setDarkMode((d) => !d)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            >
+              {darkMode ? '🌙' : '☀️'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="inline-flex h-11 items-center justify-center rounded-full border border-rose-950/10 bg-slate-900 px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800"
+            >
+              Enter portal
+            </button>
+          </div>
         </div>
       </header>
 
@@ -113,7 +165,7 @@ export const Home = () => {
           </div>
 
           {/* Decorative SVG wave */}
-          <div className="hero-wave-svg -mt-12 wave-style-2">
+          <div className={`hero-wave-svg -mt-12 ${waveAlt ? 'wave-style-2' : 'wave-style-1'}`}>
             <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="w-full h-28" aria-hidden="true">
               {/* Default wave (gentle peaks) */}
               <path className="wave-default" d="M0,32 C120,64 360,96 720,88 C1080,80 1320,40 1440,24 L1440,120 L0,120 Z" />
