@@ -176,12 +176,12 @@ export const Home = () => {
 
         </section>
 
-        <section className="mx-auto -mt-8 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <section className="section-grid mx-auto -mt-8 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
           <div className="grid gap-5 md:grid-cols-2">
             {serviceCards.map((card) => (
               <article
                 key={card.title}
-                className="overflow-hidden rounded-[2rem] border border-rose-950/10 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] glass-card section-fade"
+                className="overflow-hidden rounded-[2rem] border border-rose-950/10 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] glass-card feature-frame section-fade"
               >
                 <div className={`h-56 bg-gradient-to-br ${card.accent} p-5`}>
                   <div className="flex h-full items-end justify-between rounded-[1.5rem] border border-white/60 bg-white/40 p-4 backdrop-blur-sm">

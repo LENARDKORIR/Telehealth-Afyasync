@@ -301,6 +301,48 @@ canvas {
   color: #e6eef2;
 }
 
+/* Animated feature card border */
+@keyframes border-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.feature-frame {
+  position: relative;
+  isolation: isolate;
+}
+
+.feature-frame::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from 180deg, rgba(8,145,178,0.7), rgba(142,23,27,0.7), rgba(99,102,241,0.7), rgba(8,145,178,0.7));
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  opacity: 0.22;
+  pointer-events: none;
+  animation: border-spin 12s linear infinite;
+}
+
+.feature-frame:hover::before {
+  opacity: 0.55;
+}
+
+.section-grid {
+  background-image: linear-gradient(rgba(15,23,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: center;
+}
+
+.dark-mode .section-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+}
+
+
 /* Floating Action Button (FAB) */
 .fab {
   position: fixed;
