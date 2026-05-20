@@ -27,7 +27,7 @@ const serviceCards = [
     title: 'Mental Health',
     description:
       'Access a network of licensed therapists and psychiatrists to help navigate anxiety, stress, depression and more.',
-    link: 'Teladoc Health Mental Health →',
+    link: 'Telehealth Mental Health →',
     tone: 'card-tile-3',
     image: '/landing-images/mental-health.svg',
   },
@@ -218,6 +218,112 @@ export const Home = () => {
             </div>
           </div>
         </section>
+
+        <footer className="border-t border-slate-900/10 bg-white px-4 py-14 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <p className="max-w-6xl text-sm leading-6 text-slate-700 sm:text-base">
+              The testimonials, opinions and statements reflect one individual’s personal
+              experience with Telehealth. Results and experiences may vary from person to person
+              and will be unique to each individual. The testimonials are voluntarily provided and
+              are not paid. The individual in the photo is not the individual who provided this
+              testimonial.
+            </p>
+
+            <div className="mt-12 grid gap-10 lg:grid-cols-[0.9fr_repeat(5,minmax(0,1fr))]">
+              <div className="space-y-6">
+                <div>
+                  <p className="text-3xl font-black tracking-tight text-[#3d2d7d]">Telehealth</p>
+                  <p className="mt-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                    Headquarters
+                  </p>
+                  <p className="mt-2 text-base leading-7 text-slate-800">
+                    Telehealth, Inc.
+                    <br />
+                    155 East 44th Street,
+                    <br />
+                    Suite 1700
+                    <br />
+                    Nairobi, Kenya
+                  </p>
+                </div>
+
+                <p className="max-w-sm text-2xl font-black leading-8 text-slate-900">
+                  Empowering all people everywhere to live their healthiest lives.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-black text-[#3d2d7d]">Individuals</h3>
+                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
+                  <li>24/7 Care</li>
+                  <li>Mental Health</li>
+                  <li>Weight Management</li>
+                  <li>Diabetes Management</li>
+                  <li>Hypertension Management</li>
+                  <li>Specialty &amp; Wellness</li>
+                  <li>Primary Care</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-black text-[#3d2d7d]">Organizations</h3>
+                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
+                  <li>Our Approach</li>
+                  <li>Employers</li>
+                  <li>Health Plans</li>
+                  <li>Hospitals &amp; Health Systems</li>
+                  <li>Resource Center</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-black text-[#3d2d7d]">Clinicians</h3>
+                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
+                  <li>Commitment to Quality</li>
+                  <li>Provider Careers</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-black text-[#3d2d7d]">Who we are</h3>
+                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
+                  <li>Our Company</li>
+                  <li>Our Impact</li>
+                  <li>Leadership</li>
+                  <li>Careers</li>
+                  <li>Industry Events</li>
+                  <li>Newsroom</li>
+                  <li>Investors</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-black text-[#3d2d7d]">Helpful Links</h3>
+                <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
+                  <li>Contact Us</li>
+                  <li>Health Library</li>
+                  <li>Help Center</li>
+                  <li>Legal, Privacy &amp; Compliance</li>
+                  <li>Your Privacy Choices</li>
+                  <li>Language Assistance Services</li>
+                  <li>Community Guidelines</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-12 flex flex-col gap-4 border-t border-slate-900/10 pt-6 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between">
+              <p>© 2026 Telehealth, Inc. PL015954.A</p>
+              <div className="flex gap-3">
+                <span className="rounded-full border border-slate-900/10 bg-slate-50 px-4 py-2 font-semibold">
+                  App Store
+                </span>
+                <span className="rounded-full border border-slate-900/10 bg-slate-50 px-4 py-2 font-semibold">
+                  Google Play
+                </span>
+              </div>
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
