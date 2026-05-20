@@ -61,9 +61,9 @@ export const Register = () => {
 
   return (
     <AuthLayout>
-      <div className="rounded-[2rem] border border-white/70 bg-white/90 p-8 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-10">
+      <div className="auth-card rounded-[2rem] border border-white/70 bg-white/92 p-8 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:p-10">
         <div className="mb-8 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-rose-700">Create account</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#6a45f0]">Create account</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Get started</h1>
           <p className="mt-3 text-sm leading-6 text-slate-600">Join the secure telehealth workspace.</p>
         </div>
@@ -83,7 +83,7 @@ export const Register = () => {
               value={formData.name}
               onChange={handleChange}
               placeholder="John Doe"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
+              className="auth-input w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#6a45f0] focus:bg-white focus:ring-4 focus:ring-[#6a45f0]/10"
               disabled={loading}
             />
           </div>
@@ -96,7 +96,7 @@ export const Register = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="you@example.com"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
+              className="auth-input w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#6a45f0] focus:bg-white focus:ring-4 focus:ring-[#6a45f0]/10"
               disabled={loading}
             />
           </div>
@@ -107,7 +107,7 @@ export const Register = () => {
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
+              className="auth-input w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-[#6a45f0] focus:bg-white focus:ring-4 focus:ring-[#6a45f0]/10"
               disabled={loading}
             >
               <option value="patient">Patient</option>
@@ -124,7 +124,7 @@ export const Register = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="••••••••"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
+              className="auth-input w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#6a45f0] focus:bg-white focus:ring-4 focus:ring-[#6a45f0]/10"
               disabled={loading}
             />
           </div>
@@ -137,7 +137,7 @@ export const Register = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="••••••••"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
+              className="auth-input w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#6a45f0] focus:bg-white focus:ring-4 focus:ring-[#6a45f0]/10"
               disabled={loading}
             />
           </div>
@@ -156,7 +156,7 @@ export const Register = () => {
           Already have an account?{' '}
           <button
             onClick={() => navigate('/login')}
-            className="font-semibold text-rose-700 hover:underline"
+            className="font-semibold text-[#6a45f0] hover:underline"
           >
             Login
           </button>
