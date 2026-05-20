@@ -29,18 +29,44 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
                 editorial layout, softer gradients, and the same calm clinical tone.
               </p>
 
-              <div className="mt-8 grid max-w-xl grid-cols-3 gap-4">
-                <div className="rounded-[1.25rem] border border-slate-900/10 bg-white/80 p-4 shadow-sm backdrop-blur">
-                  <p className="text-2xl font-black text-[#6a45f0]">24/7</p>
-                  <p className="mt-1 text-sm text-slate-700">Access</p>
-                </div>
-                <div className="rounded-[1.25rem] border border-slate-900/10 bg-white/80 p-4 shadow-sm backdrop-blur">
-                  <p className="text-2xl font-black text-[#6a45f0]">100+</p>
-                  <p className="mt-1 text-sm text-slate-700">Plans</p>
-                </div>
-                <div className="rounded-[1.25rem] border border-slate-900/10 bg-white/80 p-4 shadow-sm backdrop-blur">
-                  <p className="text-2xl font-black text-[#6a45f0]">Sync</p>
-                  <p className="mt-1 text-sm text-slate-700">Offline-safe</p>
+              <div className="mt-10 auth-hero-art max-w-2xl rounded-[2rem] border border-slate-900/10 bg-white/70 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur">
+                <div className="grid grid-cols-[1.15fr_0.85fr] gap-4">
+                  <div className="auth-hero-illustration rounded-[1.75rem]">
+                    <div className="auth-hero-overlay" />
+                    <div className="auth-hero-card">
+                      <span className="auth-hero-kicker">Create account</span>
+                      <strong>Get started</strong>
+                      <span>Join the secure telehealth workspace.</span>
+                    </div>
+                  </div>
+                  <div className="grid gap-4">
+                    <div className="rounded-[1.5rem] border border-slate-900/10 bg-white/90 p-4 shadow-sm">
+                      <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">Offline sync</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Records and consultations stay encrypted and sync automatically when the connection returns.
+                      </p>
+                    </div>
+                    <div className="rounded-[1.5rem] border border-slate-900/10 bg-white/90 p-4 shadow-sm">
+                      <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">Secure access</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Patients and providers share one calm workspace across devices.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 pt-1">
+                      <div className="rounded-[1.25rem] border border-slate-900/10 bg-white/80 p-3 shadow-sm">
+                        <p className="text-2xl font-black text-[#6a45f0]">24/7</p>
+                        <p className="mt-1 text-xs text-slate-600">Access</p>
+                      </div>
+                      <div className="rounded-[1.25rem] border border-slate-900/10 bg-white/80 p-3 shadow-sm">
+                        <p className="text-2xl font-black text-[#6a45f0]">100+</p>
+                        <p className="mt-1 text-xs text-slate-600">Plans</p>
+                      </div>
+                      <div className="rounded-[1.25rem] border border-slate-900/10 bg-white/80 p-3 shadow-sm">
+                        <p className="text-2xl font-black text-[#6a45f0]">Sync</p>
+                        <p className="mt-1 text-xs text-slate-600">Offline-safe</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
