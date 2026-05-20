@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { ensureDatabaseSchema, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
-import { createUser, getUserByEmail, verifyPassword, signToken, getUserById } from './auth.js';
+import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, verifyToken } from './auth.js';
 import { createAppointment, deleteAppointment, getAppointmentById, listAppointmentsByPatient, updateAppointment } from './appointments.js';
 import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
 import { seedDemoData } from './seedDemoData.js';
@@ -125,6 +125,83 @@ app.post('/api/auth/refresh', async (req, res) => {
     return res.json({ success: true, token, refreshToken: token, user, message: 'Token refreshed' });
   } catch (error) {
     return res.status(500).json({ message: error instanceof Error ? error.message : 'Refresh failed' });
+  }
+});
+
+app.post('/api/auth/logout', (_req, res) => {
+  res.json({ success: true, message: 'Logged out successfully' });
+});
+
+app.get('/api/dashboard/stats', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    
+    const payload = verifyToken(token);
+    if (!payload) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const user = await getUserById(payload.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let stats = {};
+
+    if (user.role === 'patient') {
+      const appointmentsRes = await pool.query(
+        'SELECT * FROM appointments WHERE patient_id = $1',
+        [user.id]
+      );
+      const recordsRes = await pool.query(
+        'SELECT * FROM medical_records WHERE patient_id = $1',
+        [user.id]
+      );
+
+      const appointments = appointmentsRes.rows || [];
+      const records = recordsRes.rows || [];
+
+      stats = {
+        myAppointments: appointments.length,
+        upcomingAppointments: appointments.filter((a) => a.status === 'scheduled').length,
+        completedAppointments: appointments.filter((a) => a.status === 'completed').length,
+        completedRecords: records.length,
+      };
+    } else {
+      // Doctor/Admin stats
+      const patientsRes = await pool.query('SELECT COUNT(*) FROM patients');
+      const appointmentsRes = await pool.query('SELECT * FROM appointments');
+      const recordsRes = await pool.query('SELECT COUNT(*) FROM medical_records');
+
+      const appointments = appointmentsRes.rows || [];
+
+      stats = {
+        totalPatients: parseInt(patientsRes.rows[0].count),
+        appointmentsToday: appointments.filter((a) => new Date(a.appointment_date).toDateString() === new Date().toDateString()).length,
+        totalAppointments: appointments.length,
+        completedAppointments: appointments.filter((a) => a.status === 'completed').length,
+        pendingReports: 0,
+        criticalCases: 0,
+      };
+    }
+
+    return res.json({ data: stats });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch dashboard stats' });
+  }
+});
+
+app.get('/api/patients/:id/records', async (req, res) => {
+  try {
+    const records = await listMedicalRecordsByPatient(req.params.id);
+    res.json({ data: records });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch medical records' });
   }
 });
 
