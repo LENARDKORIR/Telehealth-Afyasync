@@ -227,6 +227,17 @@ export const Home = () => {
           </div>
         </section>
       </main>
+
+      {/* Floating contact button */}
+      <button
+        type="button"
+        className="fab pulse"
+        onClick={() => navigate('/contact')}
+        aria-label="Contact support"
+        title="Contact support"
+      >
+        💬
+      </button>
     </div>
   );
 };
