@@ -103,10 +103,14 @@ export const Home = () => {
             <h1 className="text-4xl font-black tracking-tight text-[#3d2d7d] sm:text-5xl lg:text-6xl">
               The care you need, all in one place
             </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-700 sm:text-xl">
-              A polished landing page inspired by the uploaded screenshots: large editorial type,
-              three-up service cards, and a calm visual hierarchy that feels familiar and clean.
-            </p>
+            <div className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-700 sm:text-xl">
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#6a45f0]">About</p>
+              <p className="mt-3">
+                A secure web platform that connects patients and healthcare providers — online or
+                offline. Medical records and consultations are encrypted and automatically synced
+                the moment connectivity is restored.
+              </p>
+            </div>
           </div>
         </section>
 
