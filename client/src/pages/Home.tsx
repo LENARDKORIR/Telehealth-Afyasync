@@ -308,9 +308,7 @@ export const Home = () => {
                   <p className="mt-2 text-base leading-7 text-slate-800">
                     Telehealth, Inc.
                     <br />
-                    155 East 44th Street,
-                    <br />
-                    Suite 1700
+                    Ronald Ngala Street,
                     <br />
                     Nairobi, Kenya
                   </p>
