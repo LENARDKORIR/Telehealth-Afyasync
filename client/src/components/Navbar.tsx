@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { getInitials } from '../utils/helpers';
+import { useOffline } from '../hooks/useOffline';
 
 interface NavbarProps {
   onMenuToggle: () => void;
@@ -15,6 +16,7 @@ export const Navbar = ({ onMenuToggle }: NavbarProps) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isOnline } = useOffline();
 
   const handleLogout = async () => {
     await logout();
@@ -55,6 +57,10 @@ export const Navbar = ({ onMenuToggle }: NavbarProps) => {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
+          <div className={`hidden items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold md:inline-flex ${isOnline ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
+            <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            {isOnline ? 'Online' : 'Offline mode'}
+          </div>
           <div className="hidden text-right sm:block">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Welcome</p>
             <p className="font-semibold text-slate-900">{user?.name}</p>
