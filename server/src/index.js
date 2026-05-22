@@ -363,6 +363,62 @@ app.get('/api/audit-logs/export', async (req, res) => {
   }
 });
 
+// Stream audit logs as CSV (attachment) to avoid large file writes
+app.get('/api/audit-logs/stream', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+    const payload = verifyToken(token);
+    if (!payload) return res.status(401).json({ message: 'Invalid token' });
+
+    const user = await getUserById(payload.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+
+    const filters = {
+      limit: Math.min(Math.max(Number(req.query.limit) || 1000, 1), 5000),
+      user: req.query.user || undefined,
+      role: req.query.role || undefined,
+      action: req.query.action || undefined,
+      entityType: req.query.entityType || req.query.entity_type || undefined,
+      fromDate: req.query.from || undefined,
+      toDate: req.query.to || undefined,
+    };
+
+    const logs = await listAuditEvents(filters);
+
+    const timestamp = Date.now();
+    const filename = `audit-logs-${timestamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // Write header
+    res.write('id,actorName,actorRole,action,entityType,entityId,details,createdAt\n');
+
+    for (const r of logs) {
+      const row = [
+        r.id,
+        r.actorName || '',
+        r.actorRole || '',
+        r.action,
+        r.entityType,
+        r.entityId || '',
+        typeof r.details === 'object' ? JSON.stringify(r.details) : String(r.details || ''),
+        new Date(r.createdAt).toISOString(),
+      ].map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',');
+      res.write(row + '\n');
+    }
+
+    res.end();
+  } catch (error) {
+    console.error('Stream export failed', error);
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Export failed' });
+  }
+});
+
 app.get('/api/patients/:id/records', async (req, res) => {
   try {
     const records = await listMedicalRecordsByPatient(req.params.id);
