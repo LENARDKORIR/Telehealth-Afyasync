@@ -3,7 +3,7 @@
  */
 
 import api from './api';
-import { ENDPOINTS, STORES, TOKEN_KEY, USER_KEY } from '../utils/constants';
+import { ENDPOINTS, STORES, TOKEN_KEY, USER_KEY, REFRESH_TOKEN_KEY } from '../utils/constants';
 import type { AuthCredentials, RegisterData, AuthResponse, User } from '../types/auth';
 import { db } from '../database/indexedDB';
 
@@ -36,8 +36,11 @@ const isNetworkFailure = (error: unknown) => {
   return !(error as { response?: unknown }).response;
 };
 
-const persistSession = (user: User, token: string) => {
+const persistSession = (user: User, token: string, refreshToken?: string) => {
   localStorage.setItem(TOKEN_KEY, token);
+  if (refreshToken) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 };
 
@@ -71,10 +74,10 @@ export const authService = {
   async login(credentials: AuthCredentials): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>(ENDPOINTS.LOGIN, credentials);
-      const { token, user } = response.data;
+      const { token, refreshToken, user } = response.data;
 
       // Store token and user
-      persistSession(user, token);
+      persistSession(user, token, refreshToken);
       await saveLocalUser(user, credentials.password);
 
       return response.data;
@@ -109,10 +112,10 @@ export const authService = {
     try {
       const { confirmPassword, ...registerData } = data;
       const response = await api.post<AuthResponse>(ENDPOINTS.REGISTER, registerData);
-      const { token, user } = response.data;
+      const { token, refreshToken, user } = response.data;
 
       // Store token and user
-      persistSession(user, token);
+      persistSession(user, token, refreshToken);
       await saveLocalUser(user, registerData.password);
 
       return response.data;
@@ -154,7 +157,7 @@ export const authService = {
     } finally {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
-      localStorage.removeItem('telehealth_refresh_token');
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
       // Clear IndexedDB
       await db.clear('patients');
       await db.clear('appointments');

@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL, TOKEN_KEY, ENDPOINTS } from '../utils/constants';
+import { API_BASE_URL, TOKEN_KEY, REFRESH_TOKEN_KEY, ENDPOINTS } from '../utils/constants';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -46,7 +46,7 @@ api.interceptors.response.use(
 
       try {
         // Try to refresh token
-        const refreshToken = localStorage.getItem('telehealth_refresh_token');
+        const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
         if (refreshToken) {
           const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.REFRESH_TOKEN}`, {
             refreshToken,
@@ -54,7 +54,7 @@ api.interceptors.response.use(
 
           localStorage.setItem(TOKEN_KEY, response.data.token);
           if (response.data.refreshToken) {
-            localStorage.setItem('telehealth_refresh_token', response.data.refreshToken);
+            localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refreshToken);
           }
 
           // Retry original request
@@ -63,7 +63,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Redirect to login on refresh failure
         localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem('telehealth_refresh_token');
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
         window.location.href = '/login';
       }
     }
