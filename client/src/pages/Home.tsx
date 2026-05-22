@@ -254,7 +254,7 @@ export const Home = () => {
                     <div>
                       <p className="text-5xl font-black text-[#6a45f0]">100+</p>
                       <p className="mt-2 text-base text-slate-700">
-                        Kenyan health plans partner with Afyasync
+                        Kenya health plans partner with Afyasync
                       </p>
                     </div>
                     <div>
