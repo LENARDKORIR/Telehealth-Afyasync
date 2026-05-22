@@ -339,34 +339,46 @@ app.get('/api/audit-logs/export', async (req, res) => {
 
       // PDF table layout settings
       const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-      const colWidths = [120, 80, 60, 80, 80, 80]; // approximate widths for columns
+      // column widths in proportion; details column gets most space
+      const colWidths = [140, 100, 70, 90, 90, pageWidth - (140 + 100 + 70 + 90 + 90) - 20];
       const headers = ['Timestamp', 'Actor', 'Role', 'Action', 'Entity', 'Details'];
 
-      let y = doc.y;
       const headerFontSize = 12;
       const rowFontSize = 9;
+      const rowPadding = 6;
+
+      const startX = doc.x;
 
       const renderHeader = () => {
         doc.fontSize(headerFontSize).font('Helvetica-Bold');
-        let x = doc.x;
+        let x = startX;
+        const y = doc.y;
+        // header background
+        doc.save().rect(x - 4, y - 4, pageWidth + 8, headerFontSize + 12).fill('#F3F4F6').restore();
         for (let i = 0; i < headers.length; i++) {
-          doc.text(headers[i], x, doc.y, { width: colWidths[i], continued: i !== headers.length - 1 });
+          doc.fillColor('#111827').text(headers[i], x + 2, y, { width: colWidths[i] - 4, align: 'left' });
           x += colWidths[i] + 8;
         }
-        doc.moveDown(0.5);
-        doc.fontSize(rowFontSize).font('Helvetica');
-        y = doc.y;
+        doc.moveDown(1.0);
+        doc.fontSize(rowFontSize).font('Helvetica').fillColor('#000000');
+      };
+
+      const drawRowBorders = (yTop, rowHeight) => {
+        let x = startX - 4;
+        // outer rect
+        doc.save().lineWidth(0.5).rect(x, yTop - 4, pageWidth + 8, rowHeight + 8).stroke('#E5E7EB').restore();
+        // vertical separators
+        x = startX;
+        for (let i = 0; i < colWidths.length; i++) {
+          doc.moveTo(x + colWidths[i] + 4, yTop - 4).lineTo(x + colWidths[i] + 4, yTop + rowHeight + 4).stroke('#E5E7EB');
+          x += colWidths[i] + 8;
+        }
       };
 
       renderHeader();
 
       for (const r of logs) {
-        // page break check
-        if (doc.y > doc.page.height - doc.page.margins.bottom - 80) {
-          doc.addPage();
-          renderHeader();
-        }
-
+        // Prepare cell texts
         const cols = [
           new Date(r.createdAt).toLocaleString(),
           r.actorName || r.actorId || 'System',
@@ -376,12 +388,35 @@ app.get('/api/audit-logs/export', async (req, res) => {
           typeof r.details === 'object' ? JSON.stringify(r.details) : String(r.details || ''),
         ];
 
-        let x = doc.x;
+        // Measure row height by measuring the tallest cell
+        let maxHeight = 0;
+        let x = startX;
         for (let i = 0; i < cols.length; i++) {
-          doc.text(cols[i], x, doc.y, { width: colWidths[i], continued: i !== cols.length - 1 });
+          const h = doc.heightOfString(cols[i], { width: colWidths[i] - 8, align: 'left' });
+          if (h > maxHeight) maxHeight = h;
           x += colWidths[i] + 8;
         }
-        doc.moveDown(0.5);
+        const rowHeight = Math.max(maxHeight, rowFontSize) + rowPadding;
+
+        // page break check
+        if (doc.y > doc.page.height - doc.page.margins.bottom - rowHeight - 40) {
+          doc.addPage();
+          renderHeader();
+        }
+
+        const yTop = doc.y;
+
+        // draw cells
+        x = startX;
+        for (let i = 0; i < cols.length; i++) {
+          doc.text(cols[i], x + 4, yTop, { width: colWidths[i] - 8, align: 'left' });
+          x += colWidths[i] + 8;
+        }
+
+        // draw borders for the row
+        drawRowBorders(yTop, rowHeight);
+
+        doc.moveDown((rowHeight + 6) / 12);
       }
 
       doc.end();
