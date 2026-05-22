@@ -83,6 +83,7 @@ const serviceCards = [
     link: 'Learn more →',
     tone: 'card-tile-1',
     image: '/landing-images/care-247.svg',
+    to: '/learn-more/24-7-care',
   },
   {
     title: 'Primary Care',
@@ -91,6 +92,7 @@ const serviceCards = [
     link: 'Learn more →',
     tone: 'card-tile-2',
     image: '/landing-images/primary-care.svg',
+    to: '/learn-more/primary-care',
   },
   {
     title: 'Mental Health',
@@ -99,6 +101,7 @@ const serviceCards = [
     link: 'Telehealth Mental Health →',
     tone: 'card-tile-3',
     image: '/landing-images/mental-health.svg',
+    to: '/learn-more/mental-health',
   },
   {
     title: 'Condition Management',
@@ -107,6 +110,7 @@ const serviceCards = [
     link: 'Diabetes →',
     tone: 'card-tile-4',
     image: '/landing-images/condition-management.svg',
+    to: '/learn-more/condition-management',
   },
   {
     title: 'Specialty Care',
@@ -115,6 +119,7 @@ const serviceCards = [
     link: 'Dermatology →',
     tone: 'card-tile-5',
     image: '/landing-images/specialty-care.svg',
+    to: '/learn-more/specialty-care',
   },
   {
     title: 'Everyday Healthy Habits',
@@ -123,6 +128,7 @@ const serviceCards = [
     link: 'Nutrition →',
     tone: 'card-tile-6',
     image: '/landing-images/healthy-habits.svg',
+    to: '/learn-more/healthy-habits',
   },
 ];
 
@@ -207,13 +213,13 @@ export const Home = () => {
                 <div className="space-y-3 px-1 pt-5">
                   <h2 className="px-1 text-2xl font-black text-[#3d2d7d]">{card.title}</h2>
                   <p className="px-1 text-lg leading-8 text-slate-800">{card.description}</p>
-                  <a
-                    href="/login"
+                  <Link
+                    to={card.to}
                     className="inline-flex items-center gap-2 px-1 text-lg font-medium text-[#6a45f0] transition hover:translate-x-1"
                   >
                     {card.link}
                     <span aria-hidden="true">→</span>
-                  </a>
+                  </Link>
                 </div>
               </article>
             ))}

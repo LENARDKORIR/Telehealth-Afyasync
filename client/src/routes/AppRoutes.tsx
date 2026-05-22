@@ -12,6 +12,7 @@ import { Register } from '../pages/Register';
 import { Dashboard } from '../pages/Dashboard';
 import { Patients } from '../pages/Patients';
 import { Appointments } from '../pages/Appointments';
+import { HealthTopic } from '../pages/HealthTopic';
 import { Reports } from '../pages/Reports';
 import { Settings } from '../pages/Settings';
 
@@ -47,6 +48,10 @@ export const AppRoutes = () => {
             <Appointments />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/learn-more/:topic"
+        element={<HealthTopic />}
       />
       <Route
         path="/reports"
