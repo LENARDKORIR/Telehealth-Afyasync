@@ -6,6 +6,7 @@ import { createPatient, deletePatient, getPatientById, listPatients, updatePatie
 import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, verifyToken } from './auth.js';
 import { createAppointment, deleteAppointment, getAppointmentById, listAppointments, listAppointmentsByPatient, updateAppointment } from './appointments.js';
 import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
+import { listAuditEvents, logAuditEvent } from './audit.js';
 import { seedDemoData } from './seedDemoData.js';
 
 dotenv.config();
@@ -70,6 +71,12 @@ app.get('/api/patients/:id', async (req, res) => {
 app.post('/api/patients', async (req, res) => {
   try {
     const patient = await createPatient(req.body);
+    void logAuditEvent({
+      action: 'create',
+      entityType: 'patient',
+      entityId: patient.id,
+      details: { name: patient.name, email: patient.email },
+    });
     res.status(201).json({ data: patient });
   } catch (error) {
     res.status(500).json({
@@ -107,6 +114,15 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
     const token = signToken(user);
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'login',
+      entityType: 'auth',
+      entityId: user.id,
+      details: { email: user.email },
+    });
     return res.json({ success: true, token, refreshToken: token, user, message: 'Logged in' });
   } catch (error) {
     return res.status(500).json({ message: error instanceof Error ? error.message : 'Login failed' });
@@ -128,7 +144,28 @@ app.post('/api/auth/refresh', async (req, res) => {
   }
 });
 
-app.post('/api/auth/logout', (_req, res) => {
+app.post('/api/auth/logout', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(' ')[1];
+  if (token) {
+    const payload = verifyToken(token);
+    if (payload) {
+      void getUserById(payload.id).then((user) => {
+        if (user) {
+          return logAuditEvent({
+            actorId: user.id,
+            actorName: user.name,
+            actorRole: user.role,
+            action: 'logout',
+            entityType: 'auth',
+            entityId: user.id,
+            details: {},
+          });
+        }
+        return null;
+      });
+    }
+  }
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
@@ -196,6 +233,37 @@ app.get('/api/dashboard/stats', async (req, res) => {
   }
 });
 
+app.get('/api/audit-logs', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const payload = verifyToken(token);
+    if (!payload) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const user = await getUserById(payload.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const limit = Number(req.query.limit) || 50;
+    const logs = await listAuditEvents(Math.min(Math.max(limit, 1), 100));
+    return res.json({ data: logs });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch audit logs' });
+  }
+});
+
 app.get('/api/patients/:id/records', async (req, res) => {
   try {
     const records = await listMedicalRecordsByPatient(req.params.id);
@@ -213,6 +281,13 @@ app.put('/api/patients/:id', async (req, res) => {
       return res.status(404).json({ message: 'Patient not found' });
     }
 
+    void logAuditEvent({
+      action: 'update',
+      entityType: 'patient',
+      entityId: patient.id,
+      details: { name: patient.name, email: patient.email },
+    });
+
     return res.json({ data: patient });
   } catch (error) {
     return res.status(500).json({
@@ -228,6 +303,13 @@ app.delete('/api/patients/:id', async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ message: 'Patient not found' });
     }
+
+    void logAuditEvent({
+      action: 'delete',
+      entityType: 'patient',
+      entityId: req.params.id,
+      details: {},
+    });
 
     return res.status(204).send();
   } catch (error) {
@@ -269,6 +351,17 @@ app.get('/api/appointments/:id', async (req, res) => {
 app.post('/api/appointments', async (req, res) => {
   try {
     const appointment = await createAppointment(req.body);
+    void logAuditEvent({
+      action: 'create',
+      entityType: 'appointment',
+      entityId: appointment.id,
+      details: {
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+        appointmentDate: appointment.appointmentDate,
+        status: appointment.status,
+      },
+    });
     res.status(201).json({ data: appointment });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create appointment' });
@@ -279,6 +372,17 @@ app.put('/api/appointments/:id', async (req, res) => {
   try {
     const appointment = await updateAppointment(req.params.id, req.body);
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+    void logAuditEvent({
+      action: 'update',
+      entityType: 'appointment',
+      entityId: appointment.id,
+      details: {
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+        appointmentDate: appointment.appointmentDate,
+        status: appointment.status,
+      },
+    });
     res.json({ data: appointment });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update appointment' });
@@ -289,6 +393,12 @@ app.delete('/api/appointments/:id', async (req, res) => {
   try {
     const deleted = await deleteAppointment(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Appointment not found' });
+    void logAuditEvent({
+      action: 'delete',
+      entityType: 'appointment',
+      entityId: req.params.id,
+      details: {},
+    });
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete appointment' });
@@ -318,6 +428,12 @@ app.get('/api/medical-records/:id', async (req, res) => {
 app.post('/api/medical-records', async (req, res) => {
   try {
     const record = await createMedicalRecord(req.body);
+    void logAuditEvent({
+      action: 'create',
+      entityType: 'medical_record',
+      entityId: record.id,
+      details: { patientId: record.patientId, doctorId: record.doctorId, diagnosis: record.diagnosis },
+    });
     res.status(201).json({ data: record });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create medical record' });
@@ -328,6 +444,12 @@ app.put('/api/medical-records/:id', async (req, res) => {
   try {
     const record = await updateMedicalRecord(req.params.id, req.body);
     if (!record) return res.status(404).json({ message: 'Medical record not found' });
+    void logAuditEvent({
+      action: 'update',
+      entityType: 'medical_record',
+      entityId: record.id,
+      details: { patientId: record.patientId, doctorId: record.doctorId, diagnosis: record.diagnosis },
+    });
     res.json({ data: record });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update medical record' });
@@ -338,6 +460,12 @@ app.delete('/api/medical-records/:id', async (req, res) => {
   try {
     const deleted = await deleteMedicalRecord(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Medical record not found' });
+    void logAuditEvent({
+      action: 'delete',
+      entityType: 'medical_record',
+      entityId: req.params.id,
+      details: {},
+    });
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete medical record' });

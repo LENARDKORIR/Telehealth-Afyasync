@@ -37,6 +37,17 @@ interface AppointmentRequestForm {
   notes: string;
 }
 
+interface AuditLogEntry {
+  id: string;
+  actorName?: string | null;
+  actorRole?: string | null;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}
+
 const doctorDirectory: DoctorOption[] = [
   { id: 'dr-joyce-mwangi', name: 'Dr. Joyce Mwangi', specialty: 'Primary Care', focus: 'Routine visits, prescriptions, and follow-ups' },
   { id: 'dr-isaac-owen', name: 'Dr. Isaac Owen', specialty: 'Cardiology', focus: 'Heart health, cholesterol, and blood pressure' },
@@ -67,6 +78,7 @@ const addOneHour = (time: string) => {
 export const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({});
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
@@ -114,11 +126,36 @@ export const Dashboard = () => {
     }
   };
 
+  const loadAdminDashboard = async () => {
+    if (!user?.id) return;
+
+    setLoading(true);
+
+    try {
+      const [statsRes, logsRes] = await Promise.all([
+        api.get('/dashboard/stats').catch(() => ({ data: { data: {} } })),
+        api.get('/audit-logs?limit=12').catch(() => ({ data: { data: [] } })),
+      ]);
+
+      setStats(statsRes.data.data || {});
+      setAuditLogs(logsRes.data.data || []);
+    } catch (error) {
+      console.error('Failed to load admin dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!user?.id) return;
 
     if (user.role === 'patient') {
       void loadPatientDashboard();
+      return;
+    }
+
+    if (user.role === 'admin') {
+      void loadAdminDashboard();
       return;
     }
 
@@ -492,9 +529,34 @@ export const Dashboard = () => {
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow-md">
-            <h3 className="mb-4 text-lg font-bold text-gray-800">Recent Activity</h3>
+            <h3 className="mb-4 text-lg font-bold text-gray-800">
+              {user?.role === 'admin' ? 'System Audit Log' : 'Recent Activity'}
+            </h3>
             <div className="space-y-4">
-              {user?.role === 'patient' ? (
+              {user?.role === 'admin' ? (
+                auditLogs.length > 0 ? (
+                  auditLogs.map((entry) => (
+                    <div key={entry.id} className="flex items-start gap-3 border-b pb-4 last:border-b-0 last:pb-0">
+                      <span className="text-2xl">🧾</span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-800">
+                          {entry.actorName || 'System'} {entry.action} {entry.entityType.replace('_', ' ')}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {entry.actorRole || 'system'} • {entry.entityId || 'n/a'} • {new Date(entry.createdAt).toLocaleString()}
+                        </p>
+                        {entry.details && Object.keys(entry.details).length > 0 && (
+                          <p className="mt-1 break-words text-xs text-gray-500">
+                            {JSON.stringify(entry.details)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-600">No audit events recorded yet.</p>
+                )
+              ) : user?.role === 'patient' ? (
                 <>
                   <div className="flex items-center gap-3 border-b pb-4">
                     <span className="text-2xl">📅</span>
