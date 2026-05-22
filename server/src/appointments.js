@@ -16,8 +16,22 @@ const toAppointment = (row) => ({
 
 export async function listAppointmentsByPatient(patientId) {
   const result = await pool.query(
-    'SELECT * FROM appointments WHERE patient_id = $1 ORDER BY appointment_date DESC',
+    `SELECT a.*, p.name AS patient_name
+     FROM appointments a
+     LEFT JOIN patients p ON p.id = a.patient_id
+     WHERE a.patient_id = $1
+     ORDER BY a.appointment_date DESC, a.start_time DESC`,
     [patientId]
+  );
+  return result.rows.map(toAppointment);
+}
+
+export async function listAppointments() {
+  const result = await pool.query(
+    `SELECT a.*, p.name AS patient_name
+     FROM appointments a
+     LEFT JOIN patients p ON p.id = a.patient_id
+     ORDER BY a.appointment_date DESC, a.start_time DESC`
   );
   return result.rows.map(toAppointment);
 }

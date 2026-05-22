@@ -4,7 +4,7 @@ import cors from 'cors';
 import { ensureDatabaseSchema, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
 import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, verifyToken } from './auth.js';
-import { createAppointment, deleteAppointment, getAppointmentById, listAppointmentsByPatient, updateAppointment } from './appointments.js';
+import { createAppointment, deleteAppointment, getAppointmentById, listAppointments, listAppointmentsByPatient, updateAppointment } from './appointments.js';
 import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
 import { seedDemoData } from './seedDemoData.js';
 
@@ -238,6 +238,15 @@ app.delete('/api/patients/:id', async (req, res) => {
 });
 
 // Patient-specific appointments
+app.get('/api/appointments', async (_req, res) => {
+  try {
+    const appointments = await listAppointments();
+    res.json({ data: appointments });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch appointments' });
+  }
+});
+
 app.get('/api/appointments/patient/:patientId', async (req, res) => {
   try {
     const appointments = await listAppointmentsByPatient(req.params.patientId);
