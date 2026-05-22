@@ -4,6 +4,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import PDFDocument from 'pdfkit';
+import QueryStream from 'pg-query-stream';
 import { ensureDatabaseSchema, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
 import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, verifyToken } from './auth.js';
@@ -335,16 +336,54 @@ app.get('/api/audit-logs/export', async (req, res) => {
       const doc = new PDFDocument({ size: 'A4', margin: 36 });
       const stream = fs.createWriteStream(filepath);
       doc.pipe(stream);
-      doc.fontSize(14).text('Audit Logs', { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(10);
-      logs.forEach((r) => {
-        doc.text(`${new Date(r.createdAt).toLocaleString()} | ${r.actorRole || 'system'} | ${r.actorName || 'System'} | ${r.action} | ${r.entityType} | ${r.entityId || ''}`);
-        if (r.details && Object.keys(r.details).length > 0) {
-          doc.text(JSON.stringify(r.details), { indent: 8, continued: false });
+
+      // PDF table layout settings
+      const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      const colWidths = [120, 80, 60, 80, 80, 80]; // approximate widths for columns
+      const headers = ['Timestamp', 'Actor', 'Role', 'Action', 'Entity', 'Details'];
+
+      let y = doc.y;
+      const headerFontSize = 12;
+      const rowFontSize = 9;
+
+      const renderHeader = () => {
+        doc.fontSize(headerFontSize).font('Helvetica-Bold');
+        let x = doc.x;
+        for (let i = 0; i < headers.length; i++) {
+          doc.text(headers[i], x, doc.y, { width: colWidths[i], continued: i !== headers.length - 1 });
+          x += colWidths[i] + 8;
         }
         doc.moveDown(0.5);
-      });
+        doc.fontSize(rowFontSize).font('Helvetica');
+        y = doc.y;
+      };
+
+      renderHeader();
+
+      for (const r of logs) {
+        // page break check
+        if (doc.y > doc.page.height - doc.page.margins.bottom - 80) {
+          doc.addPage();
+          renderHeader();
+        }
+
+        const cols = [
+          new Date(r.createdAt).toLocaleString(),
+          r.actorName || r.actorId || 'System',
+          r.actorRole || 'system',
+          r.action,
+          r.entityType + (r.entityId ? ` (${r.entityId})` : ''),
+          typeof r.details === 'object' ? JSON.stringify(r.details) : String(r.details || ''),
+        ];
+
+        let x = doc.x;
+        for (let i = 0; i < cols.length; i++) {
+          doc.text(cols[i], x, doc.y, { width: colWidths[i], continued: i !== cols.length - 1 });
+          x += colWidths[i] + 8;
+        }
+        doc.moveDown(0.5);
+      }
+
       doc.end();
       stream.on('finish', () => {
         return res.json({ url: `/exports/${filename}` });
@@ -377,42 +416,88 @@ app.get('/api/audit-logs/stream', async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
 
-    const filters = {
-      limit: Math.min(Math.max(Number(req.query.limit) || 1000, 1), 5000),
-      user: req.query.user || undefined,
-      role: req.query.role || undefined,
-      action: req.query.action || undefined,
-      entityType: req.query.entityType || req.query.entity_type || undefined,
-      fromDate: req.query.from || undefined,
-      toDate: req.query.to || undefined,
-    };
-
-    const logs = await listAuditEvents(filters);
-
-    const timestamp = Date.now();
-    const filename = `audit-logs-${timestamp}.csv`;
-
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-
-    // Write header
-    res.write('id,actorName,actorRole,action,entityType,entityId,details,createdAt\n');
-
-    for (const r of logs) {
-      const row = [
-        r.id,
-        r.actorName || '',
-        r.actorRole || '',
-        r.action,
-        r.entityType,
-        r.entityId || '',
-        typeof r.details === 'object' ? JSON.stringify(r.details) : String(r.details || ''),
-        new Date(r.createdAt).toISOString(),
-      ].map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',');
-      res.write(row + '\n');
+    // Build WHERE clause similar to listAuditEvents
+    const where = [];
+    const params = [];
+    if (req.query.user?.toString().trim()) {
+      params.push(`%${req.query.user.toString().trim()}%`);
+      where.push(`(actor_name ILIKE $${params.length} OR actor_id ILIKE $${params.length})`);
+    }
+    if (req.query.role?.toString().trim()) {
+      params.push(req.query.role.toString().trim());
+      where.push(`actor_role = $${params.length}`);
+    }
+    if (req.query.action?.toString().trim()) {
+      params.push(req.query.action.toString().trim());
+      where.push(`action = $${params.length}`);
+    }
+    if (req.query.entityType?.toString().trim()) {
+      params.push(req.query.entityType.toString().trim());
+      where.push(`entity_type = $${params.length}`);
+    }
+    if (req.query.from) {
+      params.push(req.query.from.toString());
+      where.push(`created_at::date >= $${params.length}::date`);
+    }
+    if (req.query.to) {
+      params.push(req.query.to.toString());
+      where.push(`created_at::date <= $${params.length}::date`);
     }
 
-    res.end();
+    const limit = Math.min(Math.max(Number(req.query.limit) || 1000, 1), 5000);
+    params.push(limit);
+
+    const sql = `SELECT * FROM audit_logs${where.length > 0 ? ` WHERE ${where.join(' AND ')}` : ''} ORDER BY created_at DESC LIMIT $${params.length}`;
+
+    const client = await pool.connect();
+    try {
+      const qs = new QueryStream(sql, params);
+      const stream = client.query(qs);
+
+      const timestamp = Date.now();
+      const filename = `audit-logs-${timestamp}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.write('id,actorName,actorRole,action,entityType,entityId,details,createdAt\n');
+
+      stream.on('data', (row) => {
+        const r = {
+          id: row.id,
+          actorName: row.actor_name,
+          actorRole: row.actor_role,
+          action: row.action,
+          entityType: row.entity_type,
+          entityId: row.entity_id,
+          details: row.details,
+          createdAt: row.created_at,
+        };
+        const rowCsv = [
+          r.id,
+          r.actorName || '',
+          r.actorRole || '',
+          r.action,
+          r.entityType,
+          r.entityId || '',
+          typeof r.details === 'object' ? JSON.stringify(r.details) : String(r.details || ''),
+          new Date(r.createdAt).toISOString(),
+        ].map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',');
+        res.write(rowCsv + '\n');
+      });
+
+      stream.on('end', () => {
+        res.end();
+        client.release();
+      });
+
+      stream.on('error', (err) => {
+        console.error('Query stream error', err);
+        res.status(500).json({ message: 'Stream failed' });
+        client.release();
+      });
+    } catch (err) {
+      client.release();
+      throw err;
+    }
   } catch (error) {
     console.error('Stream export failed', error);
     return res.status(500).json({ message: error instanceof Error ? error.message : 'Export failed' });
@@ -640,5 +725,8 @@ async function start() {
     process.exit(1);
   }
 }
+if (process.env.NODE_ENV !== 'test') {
+  start();
+}
 
-start();
+export { app, start };
