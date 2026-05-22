@@ -298,6 +298,7 @@ app.get('/api/audit-logs/export', async (req, res) => {
     if (user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
 
     const format = (req.query.format || 'csv').toString().toLowerCase();
+    const template = (req.query.template || '').toString().toLowerCase();
     const filters = {
       limit: Math.min(Math.max(Number(req.query.limit) || 1000, 1), 5000),
       user: req.query.user || undefined,
@@ -327,10 +328,15 @@ app.get('/api/audit-logs/export', async (req, res) => {
       const filename = `audit-logs-${timestamp}.csv`;
       const filepath = path.join(exportsDir, filename);
       fs.writeFileSync(filepath, csv, 'utf8');
-      return res.json({ url: `/exports/${filename}` });
+      // if template=combined, fall through to also build PDF and return both urls
+      if (template === 'combined' || template === 'both') {
+        // generate PDF as well below by letting code continue
+      } else {
+        return res.json({ url: `/exports/${filename}` });
+      }
     }
 
-    if (format === 'pdf') {
+    if (format === 'pdf' || template === 'combined' || template === 'both') {
       const filename = `audit-logs-${timestamp}.pdf`;
       const filepath = path.join(exportsDir, filename);
       const doc = new PDFDocument({ size: 'A4', margin: 36 });
@@ -421,6 +427,11 @@ app.get('/api/audit-logs/export', async (req, res) => {
 
       doc.end();
       stream.on('finish', () => {
+        if (template === 'combined' || template === 'both') {
+          // both CSV and PDF were generated earlier (CSV filename)
+          const csvName = `audit-logs-${timestamp}.csv`;
+          return res.json({ urls: [`/exports/${csvName}`, `/exports/${filename}`] });
+        }
         return res.json({ url: `/exports/${filename}` });
       });
       stream.on('error', (err) => {
