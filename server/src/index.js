@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import PDFDocument from 'pdfkit';
 import { ensureDatabaseSchema, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
 import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, verifyToken } from './auth.js';
@@ -169,6 +172,11 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
+// Serve generated exports
+const exportsDir = path.join(process.cwd(), 'server', 'public', 'exports');
+fs.mkdirSync(exportsDir, { recursive: true });
+app.use('/exports', express.static(exportsDir));
+
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -256,11 +264,102 @@ app.get('/api/audit-logs', async (req, res) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
-    const limit = Number(req.query.limit) || 50;
-    const logs = await listAuditEvents(Math.min(Math.max(limit, 1), 100));
+    const filters = {
+      limit: Math.min(Math.max(Number(req.query.limit) || 50, 1), 100),
+      user: req.query.user || undefined,
+      role: req.query.role || undefined,
+      action: req.query.action || undefined,
+      entityType: req.query.entityType || req.query.entity_type || undefined,
+      fromDate: req.query.from || undefined,
+      toDate: req.query.to || undefined,
+    };
+
+    const logs = await listAuditEvents(filters);
     return res.json({ data: logs });
   } catch (error) {
     return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch audit logs' });
+  }
+});
+
+// Export audit logs as CSV or PDF and return URL
+app.get('/api/audit-logs/export', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+    const payload = verifyToken(token);
+    if (!payload) return res.status(401).json({ message: 'Invalid token' });
+
+    const user = await getUserById(payload.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'admin') return res.status(403).json({ message: 'Forbidden' });
+
+    const format = (req.query.format || 'csv').toString().toLowerCase();
+    const filters = {
+      limit: Math.min(Math.max(Number(req.query.limit) || 1000, 1), 5000),
+      user: req.query.user || undefined,
+      role: req.query.role || undefined,
+      action: req.query.action || undefined,
+      entityType: req.query.entityType || req.query.entity_type || undefined,
+      fromDate: req.query.from || undefined,
+      toDate: req.query.to || undefined,
+    };
+
+    const logs = await listAuditEvents(filters);
+
+    const timestamp = Date.now();
+    if (format === 'csv') {
+      const headers = ['id','actorName','actorRole','action','entityType','entityId','details','createdAt'];
+      const rows = logs.map((r) => [
+        r.id,
+        r.actorName || '',
+        r.actorRole || '',
+        r.action,
+        r.entityType,
+        r.entityId || '',
+        typeof r.details === 'object' ? JSON.stringify(r.details) : String(r.details || ''),
+        new Date(r.createdAt).toISOString(),
+      ]);
+      const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g,'""')}"`).join(','))].join('\n');
+      const filename = `audit-logs-${timestamp}.csv`;
+      const filepath = path.join(exportsDir, filename);
+      fs.writeFileSync(filepath, csv, 'utf8');
+      return res.json({ url: `/exports/${filename}` });
+    }
+
+    if (format === 'pdf') {
+      const filename = `audit-logs-${timestamp}.pdf`;
+      const filepath = path.join(exportsDir, filename);
+      const doc = new PDFDocument({ size: 'A4', margin: 36 });
+      const stream = fs.createWriteStream(filepath);
+      doc.pipe(stream);
+      doc.fontSize(14).text('Audit Logs', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(10);
+      logs.forEach((r) => {
+        doc.text(`${new Date(r.createdAt).toLocaleString()} | ${r.actorRole || 'system'} | ${r.actorName || 'System'} | ${r.action} | ${r.entityType} | ${r.entityId || ''}`);
+        if (r.details && Object.keys(r.details).length > 0) {
+          doc.text(JSON.stringify(r.details), { indent: 8, continued: false });
+        }
+        doc.moveDown(0.5);
+      });
+      doc.end();
+      stream.on('finish', () => {
+        return res.json({ url: `/exports/${filename}` });
+      });
+      stream.on('error', (err) => {
+        console.error('Failed to write PDF', err);
+        return res.status(500).json({ message: 'Failed to write PDF' });
+      });
+      return;
+    }
+
+    return res.status(400).json({ message: 'Unsupported format' });
+  } catch (error) {
+    console.error('Export failed', error);
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Export failed' });
   }
 });
 

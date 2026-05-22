@@ -79,6 +79,15 @@ export const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({});
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [auditFilters, setAuditFilters] = useState({
+    user: '',
+    role: '',
+    action: '',
+    entityType: '',
+    from: '',
+    to: '',
+    limit: 50,
+  });
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [requestMessage, setRequestMessage] = useState('');
@@ -144,6 +153,50 @@ export const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchFilteredAudit = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (auditFilters.user) params.append('user', auditFilters.user);
+      if (auditFilters.role) params.append('role', auditFilters.role);
+      if (auditFilters.action) params.append('action', auditFilters.action);
+      if (auditFilters.entityType) params.append('entityType', auditFilters.entityType);
+      if (auditFilters.from) params.append('from', auditFilters.from);
+      if (auditFilters.to) params.append('to', auditFilters.to);
+      params.append('limit', String(auditFilters.limit || 100));
+
+      const res = await api.get(`/audit-logs?${params.toString()}`);
+      setAuditLogs(res.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch filtered audit logs', err);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!auditLogs || auditLogs.length === 0) return;
+    const headers = ['id','actorName','actorRole','action','entityType','entityId','details','createdAt'];
+    const rows = auditLogs.map((r) => [
+      r.id,
+      r.actorName || '',
+      r.actorRole || '',
+      r.action,
+      r.entityType,
+      r.entityId || '',
+      typeof r.details === 'object' ? JSON.stringify(r.details) : String(r.details || ''),
+      new Date(r.createdAt).toISOString(),
+    ]);
+
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${String(c).replace(/"/g,'""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -534,28 +587,42 @@ export const Dashboard = () => {
             </h3>
             <div className="space-y-4">
               {user?.role === 'admin' ? (
-                auditLogs.length > 0 ? (
-                  auditLogs.map((entry) => (
-                    <div key={entry.id} className="flex items-start gap-3 border-b pb-4 last:border-b-0 last:pb-0">
-                      <span className="text-2xl">🧾</span>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-gray-800">
-                          {entry.actorName || 'System'} {entry.action} {entry.entityType.replace('_', ' ')}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {entry.actorRole || 'system'} • {entry.entityId || 'n/a'} • {new Date(entry.createdAt).toLocaleString()}
-                        </p>
-                        {entry.details && Object.keys(entry.details).length > 0 && (
-                          <p className="mt-1 break-words text-xs text-gray-500">
-                            {JSON.stringify(entry.details)}
+                <div>
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <input placeholder="User or actor id" value={auditFilters.user} onChange={(e) => setAuditFilters((p) => ({...p, user: e.target.value}))} className="rounded-md border px-3 py-2" />
+                    <input placeholder="Role" value={auditFilters.role} onChange={(e) => setAuditFilters((p) => ({...p, role: e.target.value}))} className="rounded-md border px-3 py-2" />
+                    <input placeholder="Action" value={auditFilters.action} onChange={(e) => setAuditFilters((p) => ({...p, action: e.target.value}))} className="rounded-md border px-3 py-2" />
+                    <input placeholder="Entity type" value={auditFilters.entityType} onChange={(e) => setAuditFilters((p) => ({...p, entityType: e.target.value}))} className="rounded-md border px-3 py-2" />
+                    <input type="date" value={auditFilters.from} onChange={(e) => setAuditFilters((p) => ({...p, from: e.target.value}))} className="rounded-md border px-3 py-2" />
+                    <input type="date" value={auditFilters.to} onChange={(e) => setAuditFilters((p) => ({...p, to: e.target.value}))} className="rounded-md border px-3 py-2" />
+                    <button onClick={fetchFilteredAudit} className="ml-2 rounded-md bg-[#6a45f0] px-3 py-2 text-white">Filter</button>
+                    <button onClick={() => { setAuditFilters({user:'',role:'',action:'',entityType:'',from:'',to:'',limit:50}); void loadAdminDashboard(); }} className="ml-2 rounded-md border px-3 py-2">Reset</button>
+                    <button onClick={handleExportCSV} className="ml-auto rounded-md border px-3 py-2">Export CSV</button>
+                  </div>
+
+                  {auditLogs.length > 0 ? (
+                    auditLogs.map((entry) => (
+                      <div key={entry.id} className="flex items-start gap-3 border-b pb-4 last:border-b-0 last:pb-0">
+                        <span className="text-2xl">🧾</span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-800">
+                            {entry.actorName || 'System'} {entry.action} {entry.entityType.replace('_', ' ')}
                           </p>
-                        )}
+                          <p className="text-sm text-gray-600">
+                            {entry.actorRole || 'system'} • {entry.entityId || 'n/a'} • {new Date(entry.createdAt).toLocaleString()}
+                          </p>
+                          {entry.details && Object.keys(entry.details).length > 0 && (
+                            <p className="mt-1 break-words text-xs text-gray-500">
+                              {JSON.stringify(entry.details)}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-600">No audit events recorded yet.</p>
-                )
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-600">No audit events recorded yet.</p>
+                  )}
+                </div>
               ) : user?.role === 'patient' ? (
                 <>
                   <div className="flex items-center gap-3 border-b pb-4">

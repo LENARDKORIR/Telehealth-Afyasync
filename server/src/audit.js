@@ -39,13 +39,57 @@ export async function logAuditEvent({
   return toAuditLog(result.rows[0]);
 }
 
-export async function listAuditEvents(limit = 50) {
+export async function listAuditEvents({
+  limit = 50,
+  user,
+  role,
+  action,
+  entityType,
+  fromDate,
+  toDate,
+} = {}) {
+  const where = [];
+  const params = [];
+
+  if (user?.trim()) {
+    params.push(`%${user.trim()}%`);
+    where.push(`(actor_name ILIKE $${params.length} OR actor_id ILIKE $${params.length})`);
+  }
+
+  if (role?.trim()) {
+    params.push(role.trim());
+    where.push(`actor_role = $${params.length}`);
+  }
+
+  if (action?.trim()) {
+    params.push(action.trim());
+    where.push(`action = $${params.length}`);
+  }
+
+  if (entityType?.trim()) {
+    params.push(entityType.trim());
+    where.push(`entity_type = $${params.length}`);
+  }
+
+  if (fromDate?.trim()) {
+    params.push(fromDate.trim());
+    where.push(`created_at::date >= $${params.length}::date`);
+  }
+
+  if (toDate?.trim()) {
+    params.push(toDate.trim());
+    where.push(`created_at::date <= $${params.length}::date`);
+  }
+
+  params.push(limit);
+
   const result = await pool.query(
     `SELECT *
-     FROM audit_logs
+     FROM audit_logs${where.length > 0 ? `
+     WHERE ${where.join(' AND ')}` : ''}
      ORDER BY created_at DESC
-     LIMIT $1`,
-    [limit]
+     LIMIT $${params.length}`,
+    params
   );
 
   return result.rows.map(toAuditLog);
