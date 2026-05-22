@@ -2,7 +2,9 @@
  * Home page
  */
 
+import { useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ResearchChatbot, type ResearchChatbotHandle } from '../components/ResearchChatbot';
 
 const quickLinks = ['Emergency', 'Appointments', 'Contact', 'Hours'];
 
@@ -134,6 +136,7 @@ const serviceCards = [
 
 export const Home = () => {
   const navigate = useNavigate();
+  const chatbotRef = useRef<ResearchChatbotHandle>(null);
 
   return (
     <div className="min-h-screen bg-[#f4f2fb] text-slate-900">
@@ -330,10 +333,17 @@ export const Home = () => {
                   <h3 className="text-lg font-black text-[#3d2d7d]">{column.title}</h3>
                   <ul className="mt-4 space-y-3 text-base leading-7 text-slate-800">
                     {column.links.map((link) => (
-                      <li key={link.label}>
+                      <li key={link.label} className="flex items-center justify-between gap-3">
                         <Link to={link.to} className="transition hover:text-[#6a45f0] hover:underline">
                           {link.label}
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => chatbotRef.current?.openWithPrompt(`Give me a simple research summary about ${link.label}.`)}
+                          className="inline-flex flex-none items-center rounded-full border border-[#6a45f0]/20 bg-[#f5f1ff] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6a45f0] transition hover:border-[#6a45f0] hover:bg-[#ece5ff]"
+                        >
+                          AI
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -371,6 +381,7 @@ export const Home = () => {
           </div>
         </footer>
       </main>
+      <ResearchChatbot ref={chatbotRef} />
     </div>
   );
 };
