@@ -68,12 +68,12 @@ const storeLinks = [
   {
     label: 'App Store',
     subtitle: 'Download on the',
-    href: 'https://apps.apple.com/us/search?term=Telehealth',
+    href: 'https://www.apple.com/app-store/',
   },
   {
     label: 'Google Play',
     subtitle: 'Get it on',
-    href: 'https://play.google.com/store/search?q=Telehealth&c=apps',
+    href: 'https://play.google.com/store/',
   },
 ];
 
