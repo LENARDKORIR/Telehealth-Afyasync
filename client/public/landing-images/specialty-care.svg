@@ -5,6 +5,24 @@
       <stop offset="0.5" stop-color="#F5EFE5"/>
       <stop offset="1" stop-color="#FFFDF9"/>
     </linearGradient>
+    <linearGradient id="skin" x1="280" y1="320" x2="420" y2="660" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7D4B8"/>
+      <stop offset="0.55" stop-color="#E7B38C"/>
+      <stop offset="1" stop-color="#C98C69"/>
+    </linearGradient>
+    <linearGradient id="skin-2" x1="720" y1="300" x2="860" y2="660" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1C6A6"/>
+      <stop offset="0.6" stop-color="#E0A77F"/>
+      <stop offset="1" stop-color="#C3845E"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="300" y1="300" x2="380" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3C2F29"/>
+      <stop offset="1" stop-color="#1F1715"/>
+    </linearGradient>
+    <linearGradient id="hair-2" x1="740" y1="280" x2="820" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4A3C33"/>
+      <stop offset="1" stop-color="#241B17"/>
+    </linearGradient>
     <filter id="shadow" x="0" y="0" width="1200" height="900" filterUnits="userSpaceOnUse">
       <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#4B3728" flood-opacity="0.14"/>
     </filter>
@@ -13,21 +31,21 @@
   <rect x="120" y="114" width="964" height="680" rx="56" fill="#FFFFFF" opacity="0.2" filter="url(#shadow)"/>
 
   <g>
-    <circle cx="330" cy="360" r="60" fill="#3C2F29"/>
-    <circle cx="330" cy="376" r="46" fill="#F1C9A8"/>
+    <circle cx="330" cy="360" r="60" fill="url(#hair)"/>
+    <circle cx="330" cy="376" r="46" fill="url(#skin)"/>
     <rect x="276" y="426" width="108" height="190" rx="36" fill="#F7F1E7"/>
-    <rect x="250" y="452" width="44" height="120" rx="22" fill="#F1C9A8"/>
-    <rect x="366" y="452" width="44" height="120" rx="22" fill="#F1C9A8"/>
+    <rect x="250" y="452" width="44" height="120" rx="22" fill="url(#skin)"/>
+    <rect x="366" y="452" width="44" height="120" rx="22" fill="url(#skin)"/>
     <path d="M314 398C322 392 338 392 346 398" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
     <path d="M316 416C326 426 334 426 344 416" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
   </g>
 
   <g>
-    <circle cx="780" cy="330" r="64" fill="#4A3C33"/>
-    <circle cx="780" cy="346" r="50" fill="#E9B894"/>
+    <circle cx="780" cy="330" r="64" fill="url(#hair-2)"/>
+    <circle cx="780" cy="346" r="50" fill="url(#skin-2)"/>
     <rect x="724" y="396" width="112" height="210" rx="38" fill="#E7D9CB"/>
-    <rect x="698" y="420" width="44" height="130" rx="22" fill="#E9B894"/>
-    <rect x="818" y="420" width="44" height="130" rx="22" fill="#E9B894"/>
+    <rect x="698" y="420" width="44" height="130" rx="22" fill="url(#skin-2)"/>
+    <rect x="818" y="420" width="44" height="130" rx="22" fill="url(#skin-2)"/>
     <path d="M764 368C772 362 788 362 796 368" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
     <path d="M766 386C776 396 784 396 794 386" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
   </g>

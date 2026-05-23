@@ -5,13 +5,27 @@
       <stop offset="0.55" stop-color="#F2E4D3"/>
       <stop offset="1" stop-color="#FBF8F3"/>
     </linearGradient>
-    <linearGradient id="scrub" x1="180" y1="320" x2="460" y2="680" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#5FA89A"/>
-      <stop offset="1" stop-color="#3E7D72"/>
+    <linearGradient id="scrub" x1="170" y1="300" x2="470" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6DB3A4"/>
+      <stop offset="0.55" stop-color="#4D8E81"/>
+      <stop offset="1" stop-color="#2F5F56"/>
     </linearGradient>
-    <linearGradient id="skin" x1="320" y1="300" x2="560" y2="720" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F2C8A7"/>
-      <stop offset="1" stop-color="#D89A77"/>
+    <linearGradient id="skin" x1="300" y1="280" x2="560" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6D4B7"/>
+      <stop offset="0.55" stop-color="#E8B48E"/>
+      <stop offset="1" stop-color="#CC8E69"/>
+    </linearGradient>
+    <radialGradient id="skin-highlight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(300 360) rotate(45) scale(120 110)">
+      <stop stop-color="#FFE5D0"/>
+      <stop offset="1" stop-color="#D49A78"/>
+    </radialGradient>
+    <linearGradient id="hair" x1="240" y1="300" x2="360" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3A2F2B"/>
+      <stop offset="1" stop-color="#1F1715"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="680" y1="280" x2="1040" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#F3EEE8" stop-opacity="0.82"/>
     </linearGradient>
     <filter id="shadow" x="0" y="0" width="1200" height="900" filterUnits="userSpaceOnUse">
       <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#3D2D7D" flood-opacity="0.16"/>
@@ -21,28 +35,28 @@
   <rect x="110" y="110" width="980" height="680" rx="56" fill="#FFFFFF" opacity="0.28" filter="url(#shadow)"/>
 
   <g>
-    <circle cx="290" cy="360" r="70" fill="#2F2B3C"/>
-    <circle cx="290" cy="372" r="54" fill="url(#skin)"/>
+    <circle cx="290" cy="360" r="70" fill="url(#hair)"/>
+    <circle cx="290" cy="372" r="54" fill="url(#skin-highlight)"/>
     <rect x="214" y="430" width="152" height="210" rx="46" fill="url(#scrub)"/>
-    <rect x="238" y="520" width="104" height="70" rx="32" fill="#F5D6BE"/>
+    <rect x="238" y="520" width="104" height="70" rx="32" fill="url(#skin)"/>
     <path d="M254 488C268 472 312 472 326 488" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
     <path d="M256 408C270 394 278 390 290 390C302 390 310 394 324 408" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
-    <rect x="188" y="468" width="46" height="116" rx="23" fill="#F5D6BE"/>
-    <rect x="346" y="468" width="46" height="116" rx="23" fill="#F5D6BE"/>
+    <rect x="188" y="468" width="46" height="116" rx="23" fill="url(#skin)"/>
+    <rect x="346" y="468" width="46" height="116" rx="23" fill="url(#skin)"/>
   </g>
 
   <g>
-    <circle cx="520" cy="410" r="64" fill="#4A3C33"/>
-    <circle cx="520" cy="426" r="50" fill="#E9B990"/>
-    <rect x="458" y="480" width="124" height="190" rx="40" fill="#F1D2C0"/>
-    <rect x="434" y="510" width="46" height="120" rx="23" fill="#E9B990"/>
-    <rect x="560" y="510" width="46" height="120" rx="23" fill="#E9B990"/>
+    <circle cx="520" cy="410" r="64" fill="url(#hair)"/>
+    <circle cx="520" cy="426" r="50" fill="url(#skin)"/>
+    <rect x="458" y="480" width="124" height="190" rx="40" fill="#F0D7C8"/>
+    <rect x="434" y="510" width="46" height="120" rx="23" fill="url(#skin)"/>
+    <rect x="560" y="510" width="46" height="120" rx="23" fill="url(#skin)"/>
     <path d="M500 450C510 444 530 444 540 450" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
     <path d="M504 472C516 486 524 486 536 472" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
   </g>
 
   <g>
-    <rect x="690" y="280" width="340" height="280" rx="40" fill="#FFFFFF" opacity="0.8"/>
+    <rect x="690" y="280" width="340" height="280" rx="40" fill="url(#panel)"/>
     <rect x="720" y="320" width="280" height="26" rx="13" fill="#E8DDD2"/>
     <rect x="720" y="366" width="220" height="18" rx="9" fill="#D7C8B9"/>
     <rect x="720" y="402" width="196" height="18" rx="9" fill="#D7C8B9"/>

@@ -5,6 +5,15 @@
       <stop offset="0.55" stop-color="#EEF5F9"/>
       <stop offset="1" stop-color="#FCFDFE"/>
     </linearGradient>
+    <linearGradient id="skin" x1="300" y1="320" x2="420" y2="660" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6D2B6"/>
+      <stop offset="0.55" stop-color="#E7B38C"/>
+      <stop offset="1" stop-color="#CD906C"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="320" y1="300" x2="420" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B302B"/>
+      <stop offset="1" stop-color="#1F1715"/>
+    </linearGradient>
     <filter id="shadow" x="0" y="0" width="1200" height="900" filterUnits="userSpaceOnUse">
       <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#223C4D" flood-opacity="0.14"/>
     </filter>
@@ -13,11 +22,11 @@
   <rect x="112" y="140" width="966" height="650" rx="56" fill="#FFFFFF" opacity="0.2" filter="url(#shadow)"/>
 
   <g>
-    <circle cx="360" cy="350" r="62" fill="#42322A"/>
-    <circle cx="360" cy="366" r="48" fill="#F2C5A3"/>
+    <circle cx="360" cy="350" r="62" fill="url(#hair)"/>
+    <circle cx="360" cy="366" r="48" fill="url(#skin)"/>
     <rect x="304" y="416" width="112" height="198" rx="38" fill="#DDE7EB"/>
-    <rect x="276" y="444" width="44" height="130" rx="22" fill="#F2C5A3"/>
-    <rect x="400" y="444" width="44" height="130" rx="22" fill="#F2C5A3"/>
+    <rect x="276" y="444" width="44" height="130" rx="22" fill="url(#skin)"/>
+    <rect x="400" y="444" width="44" height="130" rx="22" fill="url(#skin)"/>
     <path d="M344 386C352 380 368 380 376 386" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
     <path d="M346 406C356 416 364 416 374 406" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
   </g>
