@@ -10,23 +10,34 @@
     </filter>
   </defs>
   <rect width="1200" height="900" rx="48" fill="url(#bg)"/>
-  <rect x="122" y="122" width="960" height="668" rx="48" fill="#FFFFFF" opacity="0.2" filter="url(#shadow)"/>
-  <rect x="616" y="298" width="324" height="292" rx="40" fill="#F5F1EB"/>
-  <rect x="636" y="324" width="184" height="18" rx="9" fill="#D1C5B7"/>
-  <rect x="636" y="360" width="222" height="18" rx="9" fill="#D1C5B7"/>
-  <rect x="636" y="408" width="176" height="18" rx="9" fill="#D1C5B7"/>
-  <path d="M664 524L726 406L782 486L842 360L904 496" stroke="#6A45F0" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="904" cy="496" r="12" fill="#6A45F0">
-    <animate attributeName="cy" values="496;478;496" dur="4s" repeatCount="indefinite"/>
-  </circle>
-  <rect x="248" y="324" width="272" height="292" rx="40" fill="#E6DBCB"/>
-  <circle cx="380" cy="446" r="74" fill="#A46633"/>
-  <circle cx="380" cy="432" r="48" fill="#F3C2A7"/>
-  <rect x="340" y="476" width="82" height="100" rx="30" fill="#C68D5F"/>
-  <path d="M286 286C324 252 378 236 434 240C490 244 532 266 556 304" stroke="#9CC7A4" stroke-width="18" stroke-linecap="round"/>
-  <circle cx="300" cy="302" r="18" fill="#6CB36D"/>
-  <circle cx="328" cy="276" r="10" fill="#6CB36D" opacity="0.7"/>
-  <circle cx="884" cy="248" r="20" fill="#6A45F0" opacity="0.95">
-    <animate attributeName="r" values="20;30;20" dur="5s" repeatCount="indefinite"/>
-  </circle>
+  <rect x="122" y="122" width="960" height="668" rx="56" fill="#FFFFFF" opacity="0.2" filter="url(#shadow)"/>
+
+  <g>
+    <circle cx="330" cy="360" r="58" fill="#3B2E28"/>
+    <circle cx="330" cy="376" r="44" fill="#F0C3A2"/>
+    <rect x="282" y="426" width="96" height="178" rx="34" fill="#CFE0EA"/>
+    <rect x="254" y="452" width="44" height="120" rx="22" fill="#F0C3A2"/>
+    <rect x="362" y="452" width="44" height="120" rx="22" fill="#F0C3A2"/>
+    <path d="M314 396C322 390 338 390 346 396" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
+    <path d="M316 414C326 424 334 424 344 414" stroke="#2B1C15" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <rect x="520" y="280" width="320" height="320" rx="42" fill="#F5F1EB"/>
+    <rect x="552" y="316" width="220" height="18" rx="9" fill="#D1C5B7"/>
+    <rect x="552" y="352" width="240" height="18" rx="9" fill="#D1C5B7"/>
+    <rect x="552" y="388" width="196" height="18" rx="9" fill="#D1C5B7"/>
+    <path d="M564 510L626 396L682 472L742 352L804 488" stroke="#6A45F0" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="804" cy="488" r="12" fill="#6A45F0"/>
+  </g>
+
+  <g>
+    <circle cx="910" cy="360" r="44" fill="#6CB36D"/>
+    <circle cx="874" cy="392" r="32" fill="#9CC7A4"/>
+    <rect x="868" y="426" width="92" height="130" rx="30" fill="#F4D7C6"/>
+    <rect x="846" y="452" width="44" height="100" rx="22" fill="#F0C3A2"/>
+    <rect x="938" y="452" width="44" height="100" rx="22" fill="#F0C3A2"/>
+  </g>
+
+  <path d="M190 620C260 560 338 536 420 542C502 548 570 586 602 650" stroke="#9CC7A4" stroke-width="18" stroke-linecap="round"/>
 </svg>
