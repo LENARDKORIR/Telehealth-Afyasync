@@ -2,7 +2,7 @@
  * Home page
  */
 
-import { useRef } from 'react';
+import { useRef, type CSSProperties } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ResearchChatbot, type ResearchChatbotHandle } from '../components/ResearchChatbot';
 
@@ -200,13 +200,22 @@ export const Home = () => {
 
         <section className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8">
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {serviceCards.map((card) => (
+            {serviceCards.map((card, index) => (
               <article
                 key={card.title}
                 className="overflow-hidden rounded-[1.75rem] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
               >
-                <div className={`card-photo ${card.tone}`}>
+                <div
+                  className={`card-photo ${card.tone}`}
+                  style={{ '--card-delay': `${index * 1.2}s` } as CSSProperties}
+                >
                   <img src={card.image} alt={card.title} className="card-photo-image" />
+                  <img
+                    src={card.image}
+                    alt=""
+                    aria-hidden="true"
+                    className="card-photo-image card-photo-image-alt"
+                  />
                   <div className="card-photo-overlay" />
                   <div className="card-photo-copy">
                     <span>{card.title}</span>
