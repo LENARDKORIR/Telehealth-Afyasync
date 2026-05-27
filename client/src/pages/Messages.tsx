@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
+import { useNotifications } from '../hooks/useNotifications';
 import api from '../services/api';
 import { messageService } from '../services/messageService';
 import type { Message, MessageContact } from '../types/message';
@@ -28,6 +30,9 @@ const formatClock = (value: string) =>
 
 export const Messages = () => {
   const { user } = useAuth();
+  const { refreshNotifications } = useNotifications();
+  const [searchParams] = useSearchParams();
+  const requestedContactId = searchParams.get('contact') || '';
   const [contacts, setContacts] = useState<MessageContact[]>([]);
   const [selectedContactId, setSelectedContactId] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -50,8 +55,15 @@ export const Messages = () => {
       setLoadingContacts(true);
       try {
         if (user.role === 'patient') {
-          setContacts(doctorContacts);
-          setSelectedContactId((current) => current || doctorContacts[0]?.id || '');
+          const contactsWithRequested = requestedContactId && !doctorContacts.some((contact) => contact.id === requestedContactId)
+            ? [
+                { id: requestedContactId, name: 'Message contact', role: 'doctor' as const, subtitle: 'Secure message' },
+                ...doctorContacts,
+              ]
+            : doctorContacts;
+
+          setContacts(contactsWithRequested);
+          setSelectedContactId((current) => requestedContactId || current || contactsWithRequested[0]?.id || '');
           return;
         }
 
@@ -62,9 +74,15 @@ export const Messages = () => {
           role: 'patient' as const,
           subtitle: patient.email,
         }));
+        const contactsWithRequested = requestedContactId && !patientContacts.some((contact: MessageContact) => contact.id === requestedContactId)
+          ? [
+              { id: requestedContactId, name: 'Message contact', role: 'patient' as const, subtitle: 'Secure message' },
+              ...patientContacts,
+            ]
+          : patientContacts;
 
-        setContacts(patientContacts);
-        setSelectedContactId((current) => current || patientContacts[0]?.id || '');
+        setContacts(contactsWithRequested);
+        setSelectedContactId((current) => requestedContactId || current || contactsWithRequested[0]?.id || '');
       } catch (loadError) {
         console.error('Failed to load contacts:', loadError);
         setError('Unable to load message contacts right now.');
@@ -74,7 +92,7 @@ export const Messages = () => {
     };
 
     void loadContacts();
-  }, [user?.id, user?.role]);
+  }, [requestedContactId, user?.id, user?.role]);
 
   useEffect(() => {
     const loadThread = async () => {
@@ -88,6 +106,7 @@ export const Messages = () => {
       try {
         const threadMessages = await messageService.getThread(selectedContactId);
         setMessages(threadMessages);
+        void refreshNotifications();
       } catch (threadError) {
         console.error('Failed to load thread:', threadError);
         setError('Unable to load this conversation right now.');
@@ -97,7 +116,7 @@ export const Messages = () => {
     };
 
     void loadThread();
-  }, [selectedContactId]);
+  }, [refreshNotifications, selectedContactId]);
 
   const handleSend = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -126,6 +145,7 @@ export const Messages = () => {
       setSuccess('Message sent securely.');
       const refreshedThread = await messageService.getThread(selectedContactId);
       setMessages(refreshedThread);
+      void refreshNotifications();
     } catch (sendError) {
       console.error('Failed to send message:', sendError);
       setError('Unable to send the message right now.');

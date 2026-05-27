@@ -66,6 +66,7 @@ export const ENDPOINTS = {
 
   // Messages
   MESSAGES_THREAD: (otherUserId: string) => `/messages/thread/${otherUserId}`,
+  MESSAGES_UNREAD: '/messages/unread',
   MESSAGES: '/messages',
 
   // Prescriptions

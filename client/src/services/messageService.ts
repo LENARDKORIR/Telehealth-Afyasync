@@ -8,6 +8,11 @@ export const messageService = {
     return response.data.data || [];
   },
 
+  async getUnreadMessages(): Promise<Message[]> {
+    const response = await api.get<{ data: Message[] }>(ENDPOINTS.MESSAGES_UNREAD);
+    return response.data.data || [];
+  },
+
   async sendMessage(payload: { recipientId: string; subject: string; body: string }): Promise<Message> {
     const response = await api.post<{ data: Message }>(ENDPOINTS.MESSAGES, payload);
     return response.data.data;

@@ -5,6 +5,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { AppRoutes } from './routes/AppRoutes';
 import { InstallPrompt } from './components/InstallPrompt';
 import { db } from './database/indexedDB';
@@ -29,10 +30,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <>
+        <NotificationProvider>
           <AppRoutes />
           <InstallPrompt />
-        </>
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   );

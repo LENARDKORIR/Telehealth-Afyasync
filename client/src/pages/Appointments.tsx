@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
+import { useNotifications } from '../hooks/useNotifications';
 import api from '../services/api';
 
 type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
@@ -158,6 +159,7 @@ const downloadIcsFile = (appointment: Appointment, doctorView: boolean) => {
 
 export const Appointments = () => {
   const { user } = useAuth();
+  const { refreshNotifications } = useNotifications();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -287,6 +289,7 @@ export const Appointments = () => {
       setStatusMessage('Appointment rescheduled successfully.');
       cancelEdit();
       await loadAppointments();
+      void refreshNotifications();
     } catch (error) {
       console.error('Failed to reschedule appointment:', error);
       setStatusError('Unable to reschedule the appointment right now.');
@@ -310,6 +313,7 @@ export const Appointments = () => {
         cancelEdit();
       }
       await loadAppointments();
+      void refreshNotifications();
     } catch (error) {
       console.error('Failed to close appointment:', error);
       setStatusError('Unable to close the appointment right now.');
@@ -333,6 +337,7 @@ export const Appointments = () => {
         cancelEdit();
       }
       await loadAppointments();
+      void refreshNotifications();
     } catch (error) {
       console.error('Failed to delete appointment:', error);
       setStatusError('Unable to delete the appointment right now.');

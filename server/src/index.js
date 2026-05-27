@@ -12,7 +12,7 @@ import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, ver
 import { createAppointment, deleteAppointment, getAppointmentById, listAppointments, listAppointmentsByPatient, updateAppointment } from './appointments.js';
 import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
 import { listAuditEvents, logAuditEvent } from './audit.js';
-import { createMessage, listMessageThread } from './messages.js';
+import { createMessage, listMessageThread, listUnreadMessages, markMessageThreadRead } from './messages.js';
 import { getPrescriptionById, listPrescriptions, listPrescriptionsByPatient, markPrescriptionRefilled, requestRefill } from './prescriptions.js';
 import { createDocument, createLabResult, getDocumentById, listDocuments, listDocumentsByOwner, listLabResults, listLabResultsByPatient } from './records.js';
 import { seedDemoData } from './seedDemoData.js';
@@ -1057,6 +1057,21 @@ app.put('/api/prescriptions/:id/refill-complete', async (req, res) => {
   }
 });
 
+app.get('/api/messages/unread', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
+    const messages = await listUnreadMessages(user.id, limit);
+    return res.json({ data: messages });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch unread messages' });
+  }
+});
+
 app.get('/api/messages/thread/:otherUserId', async (req, res) => {
   try {
     const user = await getAuthenticatedUser(req, res);
@@ -1064,6 +1079,7 @@ app.get('/api/messages/thread/:otherUserId', async (req, res) => {
       return;
     }
 
+    await markMessageThreadRead(user.id, req.params.otherUserId);
     const messages = await listMessageThread(user.id, req.params.otherUserId);
     return res.json({ data: messages });
   } catch (error) {
