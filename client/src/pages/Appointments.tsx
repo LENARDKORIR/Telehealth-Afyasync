@@ -30,6 +30,12 @@ interface AppointmentEditForm {
   notes: string;
 }
 
+const reminderOptions = [
+  { label: '15 minutes before', minutes: 15 },
+  { label: '1 hour before', minutes: 60 },
+  { label: '1 day before', minutes: 60 * 24 },
+];
+
 const doctorDirectory = [
   { id: 'dr-joyce-mwangi', name: 'Dr. Joyce Mwangi', specialty: 'Primary Care' },
   { id: 'dr-isaac-owen', name: 'Dr. Isaac Owen', specialty: 'Cardiology' },
@@ -91,6 +97,64 @@ const addOneHour = (time: string) => {
   return `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
+const formatDateTimeForCalendar = (date: string, time: string) =>
+  `${date.replace(/-/g, '')}T${time.replace(':', '')}00`;
+
+const buildAppointmentTitle = (appointment: Appointment, doctorView: boolean) =>
+  doctorView
+    ? `Appointment with ${appointment.patientName || appointment.patientId}`
+    : `Appointment with Dr. ${getDoctorLabel(appointment.doctorId, appointment.doctorName)}`;
+
+const buildGoogleCalendarUrl = (appointment: Appointment, doctorView: boolean) => {
+  const title = buildAppointmentTitle(appointment, doctorView);
+  const details = `${appointment.reason}${appointment.notes ? `\n\nNotes: ${appointment.notes}` : ''}`;
+  const start = formatDateTimeForCalendar(appointment.appointmentDate, appointment.startTime);
+  const end = formatDateTimeForCalendar(appointment.appointmentDate, appointment.endTime || addOneHour(appointment.startTime));
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${start}/${end}`,
+    details,
+    location: 'Afyasync Telehealth Portal',
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
+
+const buildIcsContent = (appointment: Appointment, doctorView: boolean) => {
+  const title = buildAppointmentTitle(appointment, doctorView);
+  const description = `${appointment.reason}${appointment.notes ? `\\n\\nNotes: ${appointment.notes}` : ''}`;
+  const start = formatDateTimeForCalendar(appointment.appointmentDate, appointment.startTime);
+  const end = formatDateTimeForCalendar(appointment.appointmentDate, appointment.endTime || addOneHour(appointment.startTime));
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Afyasync//Appointment Calendar Sync//EN',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:${appointment.id}@afyasync`,
+    `DTSTAMP:${start}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    'LOCATION:Afyasync Telehealth Portal',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+};
+
+const downloadIcsFile = (appointment: Appointment, doctorView: boolean) => {
+  const blob = new Blob([buildIcsContent(appointment, doctorView)], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `appointment-${appointment.id}.ics`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 export const Appointments = () => {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -99,6 +163,7 @@ export const Appointments = () => {
   const [editingAppointmentId, setEditingAppointmentId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusError, setStatusError] = useState('');
+  const [reminderMessage, setReminderMessage] = useState('');
   const [editForm, setEditForm] = useState<AppointmentEditForm>({
     appointmentDate: '',
     startTime: '',
@@ -154,6 +219,47 @@ export const Appointments = () => {
   ) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const requestReminder = async (appointment: Appointment, minutesBefore: number) => {
+    const startAt = new Date(`${appointment.appointmentDate}T${appointment.startTime}`);
+    const reminderAt = new Date(startAt.getTime() - minutesBefore * 60 * 1000);
+
+    if (Number.isNaN(reminderAt.getTime())) {
+      setStatusError('Unable to schedule a reminder for this appointment.');
+      return;
+    }
+
+    if (!('Notification' in window)) {
+      setStatusError('This browser does not support notifications.');
+      return;
+    }
+
+    const permission =
+      Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
+
+    if (permission !== 'granted') {
+      setStatusError('Enable notifications to receive appointment reminders.');
+      return;
+    }
+
+    const delay = reminderAt.getTime() - Date.now();
+
+    if (delay <= 0) {
+      setStatusError('That reminder time has already passed. Pick a later reminder window.');
+      return;
+    }
+
+    window.setTimeout(() => {
+      // Browser reminder while the app is open.
+      new Notification('Appointment reminder', {
+        body: `${appointment.reason} starts at ${appointment.startTime} on ${appointment.appointmentDate}`,
+      });
+    }, delay);
+
+    setReminderMessage(`Reminder scheduled for ${minutesBefore} minutes before this appointment.`);
   };
 
   const saveReschedule = async (appointment: Appointment) => {
@@ -280,15 +386,15 @@ export const Appointments = () => {
               >
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <h3 className="break-words text-lg font-bold text-slate-900">
+                    <h3 className="wrap-break-word text-lg font-bold text-slate-900">
                       {user?.role === 'patient'
                         ? `Dr. ${getDoctorLabel(appointment.doctorId, appointment.doctorName)}`
                         : appointment.patientName || appointment.patientId}
                     </h3>
                     {user?.role === 'patient' ? (
-                      <p className="break-words text-sm text-slate-500">Reason: {appointment.reason}</p>
+                      <p className="wrap-break-word text-sm text-slate-500">Reason: {appointment.reason}</p>
                     ) : (
-                      <p className="break-words text-sm text-slate-500">
+                      <p className="wrap-break-word text-sm text-slate-500">
                         Doctor: {getDoctorLabel(appointment.doctorId, appointment.doctorName)}
                       </p>
                     )}
@@ -317,8 +423,52 @@ export const Appointments = () => {
                 <div className="mb-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
                   <p className="mb-1 text-slate-500">Appointment details</p>
                   <p className="font-medium text-slate-900">{appointment.reason}</p>
-                  {appointment.notes && <p className="mt-2 break-words">{appointment.notes}</p>}
+                  {appointment.notes && <p className="mt-2 wrap-break-word">{appointment.notes}</p>}
                 </div>
+
+                <div className="mb-4 grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => window.open(buildGoogleCalendarUrl(appointment, isDoctorView), '_blank', 'noopener,noreferrer')}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Sync to Google Calendar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadIcsFile(appointment, isDoctorView)}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Download .ics
+                  </button>
+                </div>
+
+                <div className="mb-4 rounded-2xl border border-dashed border-[#6a45f0]/25 bg-[#faf8ff] p-4">
+                  <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Reminders</p>
+                      <p className="text-sm text-slate-500">Get a browser notification before this visit starts.</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {reminderOptions.map((option) => (
+                      <button
+                        key={option.minutes}
+                        type="button"
+                        onClick={() => requestReminder(appointment, option.minutes)}
+                        className="inline-flex items-center justify-center rounded-xl border border-[#6a45f0]/20 bg-white px-3 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#f4eeff]"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {reminderMessage && (
+                  <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                    {reminderMessage}
+                  </div>
+                )}
 
                 {isDoctorView && (
                   <div className="space-y-3">
