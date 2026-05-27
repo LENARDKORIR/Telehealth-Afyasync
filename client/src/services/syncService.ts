@@ -98,6 +98,12 @@ class SyncService {
     try {
       const endpoint = this.getEndpointForStore(item.store);
 
+      if (!endpoint) {
+        console.warn(`Skipping sync for unsupported store: ${item.store}`);
+        await db.markAsSynced(item.id);
+        return;
+      }
+
       switch (item.action) {
         case 'create':
           await api.post(endpoint, item.data);
@@ -120,15 +126,14 @@ class SyncService {
   /**
    * Get endpoint for store
    */
-  private getEndpointForStore(store: string): string {
+  private getEndpointForStore(store: string): string | null {
     const endpoints: Record<string, string> = {
       patients: '/api/patients',
       appointments: '/api/appointments',
       medicalRecords: '/api/medical-records',
-      prescriptions: '/api/prescriptions',
     };
 
-    return endpoints[store] || '';
+    return endpoints[store] || null;
   }
 
   /**
