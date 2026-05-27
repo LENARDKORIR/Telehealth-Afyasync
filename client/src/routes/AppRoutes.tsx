@@ -13,6 +13,7 @@ import { Dashboard } from '../pages/Dashboard';
 import { Patients } from '../pages/Patients';
 import { Appointments } from '../pages/Appointments';
 import { Messages } from '../pages/Messages';
+import { VideoVisit } from '../pages/VideoVisit';
 import { HealthTopic } from '../pages/HealthTopic';
 import { Reports } from '../pages/Reports';
 import { Settings } from '../pages/Settings';
@@ -55,6 +56,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Messages />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video-visits/:appointmentId"
+        element={
+          <ProtectedRoute>
+            <VideoVisit />
           </ProtectedRoute>
         }
       />

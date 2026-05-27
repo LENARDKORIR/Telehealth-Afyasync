@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
@@ -157,6 +158,7 @@ const downloadIcsFile = (appointment: Appointment, doctorView: boolean) => {
 
 export const Appointments = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -425,6 +427,16 @@ export const Appointments = () => {
                   <p className="font-medium text-slate-900">{appointment.reason}</p>
                   {appointment.notes && <p className="mt-2 wrap-break-word">{appointment.notes}</p>}
                 </div>
+
+                {appointment.status === 'scheduled' && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/video-visits/${appointment.id}`)}
+                    className="mb-4 inline-flex w-full items-center justify-center rounded-xl border border-[#6a45f0] bg-[#f5f1ff] px-4 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#ece5ff]"
+                  >
+                    Join video visit
+                  </button>
+                )}
 
                 <div className="mb-4 grid gap-2 sm:grid-cols-2">
                   <button
