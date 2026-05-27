@@ -15,6 +15,7 @@ import { Appointments } from '../pages/Appointments';
 import { Messages } from '../pages/Messages';
 import { VideoVisit } from '../pages/VideoVisit';
 import { Prescriptions } from '../pages/Prescriptions';
+import { Records } from '../pages/Records';
 import { HealthTopic } from '../pages/HealthTopic';
 import { Reports } from '../pages/Reports';
 import { Settings } from '../pages/Settings';
@@ -73,6 +74,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Prescriptions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/records"
+        element={
+          <ProtectedRoute>
+            <Records />
           </ProtectedRoute>
         }
       />

@@ -11,6 +11,7 @@ const NAVIGATION_ITEMS = [
   { path: '/appointments', label: 'Appointments', icon: '📅', roles: ['admin', 'doctor', 'patient'] },
   { path: '/messages', label: 'Messages', icon: '💬', roles: ['admin', 'doctor', 'patient'] },
   { path: '/prescriptions', label: 'Prescriptions', icon: '💊', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/records', label: 'Records', icon: 'R', roles: ['admin', 'doctor', 'patient'] },
   { path: '/reports', label: 'Reports', icon: '📄', roles: ['admin', 'doctor'] },
   { path: '/settings', label: 'Settings', icon: '⚙️', roles: ['admin', 'doctor', 'patient'] },
 ];

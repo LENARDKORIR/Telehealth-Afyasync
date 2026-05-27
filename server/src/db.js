@@ -127,4 +127,33 @@ export async function ensureDatabaseSchema() {
       read_at TIMESTAMPTZ
     );
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS lab_results (
+      id TEXT PRIMARY KEY,
+      patient_id TEXT NOT NULL,
+      doctor_id TEXT NOT NULL,
+      test_name TEXT NOT NULL,
+      result_value TEXT NOT NULL,
+      unit TEXT,
+      reference_range TEXT,
+      status TEXT NOT NULL CHECK (status IN ('normal', 'abnormal', 'critical')),
+      notes TEXT,
+      result_date TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS documents (
+      id TEXT PRIMARY KEY,
+      owner_id TEXT NOT NULL,
+      uploaded_by_id TEXT NOT NULL,
+      file_name TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      content_base64 TEXT NOT NULL,
+      description TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
 }

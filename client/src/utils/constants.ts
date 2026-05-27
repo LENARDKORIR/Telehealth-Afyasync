@@ -77,6 +77,11 @@ export const ENDPOINTS = {
   MEDICAL_RECORDS: '/medical-records',
   RECORD_DETAIL: (id: string) => `/medical-records/${id}`,
 
+  // Lab Results and Documents
+  LAB_RESULTS: '/lab-results',
+  DOCUMENTS: '/documents',
+  DOCUMENT_DOWNLOAD: (id: string) => `/documents/${id}/download`,
+
   // Dashboard
   DASHBOARD_STATS: '/dashboard/stats',
 };

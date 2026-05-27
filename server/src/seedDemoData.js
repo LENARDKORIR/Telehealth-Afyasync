@@ -90,6 +90,33 @@ const demoPrescriptions = [
   },
 ];
 
+const demoLabResults = [
+  {
+    id: 'demo-lab-1',
+    patientId: 'demo-patient',
+    doctorId: 'demo-doctor',
+    testName: 'Complete Blood Count',
+    resultValue: 'Within range',
+    unit: '',
+    referenceRange: 'Normal',
+    status: 'normal',
+    notes: 'No concerning abnormalities detected.',
+    resultDate: '2026-05-02',
+  },
+];
+
+const demoDocuments = [
+  {
+    id: 'demo-document-1',
+    ownerId: 'demo-patient',
+    uploadedById: 'demo-doctor',
+    fileName: 'bloodwork-summary.pdf',
+    mimeType: 'application/pdf',
+    contentBase64: 'UERGIGRlbW8gZG9jdW1lbnQ=',
+    description: 'Summary of the latest bloodwork review.',
+  },
+];
+
 async function upsertDemoUser(user) {
   const existing = await getUserByEmail(user.email);
   if (existing) {
@@ -284,6 +311,91 @@ async function upsertDemoPrescription(prescription) {
   );
 }
 
+async function upsertDemoLabResult(labResult) {
+  const now = new Date().toISOString();
+  await pool.query(
+    `
+      INSERT INTO lab_results (
+        id,
+        patient_id,
+        doctor_id,
+        test_name,
+        result_value,
+        unit,
+        reference_range,
+        status,
+        notes,
+        result_date,
+        created_at,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ON CONFLICT (id) DO UPDATE SET
+        patient_id = EXCLUDED.patient_id,
+        doctor_id = EXCLUDED.doctor_id,
+        test_name = EXCLUDED.test_name,
+        result_value = EXCLUDED.result_value,
+        unit = EXCLUDED.unit,
+        reference_range = EXCLUDED.reference_range,
+        status = EXCLUDED.status,
+        notes = EXCLUDED.notes,
+        result_date = EXCLUDED.result_date,
+        updated_at = EXCLUDED.updated_at
+    `,
+    [
+      labResult.id,
+      labResult.patientId,
+      labResult.doctorId,
+      labResult.testName,
+      labResult.resultValue,
+      labResult.unit ?? null,
+      labResult.referenceRange ?? null,
+      labResult.status,
+      labResult.notes ?? null,
+      labResult.resultDate,
+      now,
+      now,
+    ]
+  );
+}
+
+async function upsertDemoDocument(document) {
+  const now = new Date().toISOString();
+  await pool.query(
+    `
+      INSERT INTO documents (
+        id,
+        owner_id,
+        uploaded_by_id,
+        file_name,
+        mime_type,
+        content_base64,
+        description,
+        created_at,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (id) DO UPDATE SET
+        owner_id = EXCLUDED.owner_id,
+        uploaded_by_id = EXCLUDED.uploaded_by_id,
+        file_name = EXCLUDED.file_name,
+        mime_type = EXCLUDED.mime_type,
+        content_base64 = EXCLUDED.content_base64,
+        description = EXCLUDED.description,
+        updated_at = EXCLUDED.updated_at
+    `,
+    [
+      document.id,
+      document.ownerId,
+      document.uploadedById,
+      document.fileName,
+      document.mimeType,
+      document.contentBase64,
+      document.description ?? null,
+      now,
+      now,
+    ]
+  );
+}
+
 export async function seedDemoData() {
   for (const user of demoUsers) {
     await upsertDemoUser(user);
@@ -301,5 +413,13 @@ export async function seedDemoData() {
 
   for (const prescription of demoPrescriptions) {
     await upsertDemoPrescription(prescription);
+  }
+
+  for (const labResult of demoLabResults) {
+    await upsertDemoLabResult(labResult);
+  }
+
+  for (const document of demoDocuments) {
+    await upsertDemoDocument(document);
   }
 }

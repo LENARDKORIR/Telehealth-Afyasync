@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import PDFDocument from 'pdfkit';
 import QueryStream from 'pg-query-stream';
 import { ensureDatabaseSchema, pool } from './db.js';
@@ -13,12 +14,35 @@ import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRec
 import { listAuditEvents, logAuditEvent } from './audit.js';
 import { createMessage, listMessageThread } from './messages.js';
 import { getPrescriptionById, listPrescriptions, listPrescriptionsByPatient, markPrescriptionRefilled, requestRefill } from './prescriptions.js';
+import { createDocument, createLabResult, getDocumentById, listDocuments, listDocumentsByOwner, listLabResults, listLabResultsByPatient } from './records.js';
 import { seedDemoData } from './seedDemoData.js';
 
 dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT) || 8000;
+const maxDocumentBytes = 5 * 1024 * 1024;
+
+const normalizeBase64Document = (value) => {
+  if (typeof value !== 'string') return '';
+  return value.replace(/^data:[^;]+;base64,/, '').trim();
+};
+
+const isValidBase64Document = (value) => {
+  if (!value || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) return false;
+  const normalized = value.replace(/=+$/, '');
+  const encoded = Buffer.from(value, 'base64').toString('base64').replace(/=+$/, '');
+  return normalized === encoded;
+};
+
+const sanitizeDownloadFileName = (value) => {
+  const sanitized = String(value || 'document')
+    .replace(/[\r\n"]/g, '')
+    .replace(/[\\/]/g, '-')
+    .trim();
+
+  return sanitized || 'document';
+};
 
 const getAuthenticatedUser = async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -44,8 +68,8 @@ const getAuthenticatedUser = async (req, res) => {
   return user;
 };
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
+app.use(express.json({ limit: '10mb' }));
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -784,6 +808,167 @@ app.delete('/api/medical-records/:id', async (req, res) => {
   }
 });
 
+app.get('/api/lab-results', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const labResults = user.role === 'patient'
+      ? await listLabResultsByPatient(user.id)
+      : await listLabResults();
+
+    return res.json({ data: labResults });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch lab results' });
+  }
+});
+
+app.post('/api/lab-results', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    if (user.role === 'patient') {
+      return res.status(403).json({ message: 'Patients cannot create lab results' });
+    }
+
+    const { patientId, testName, resultValue, unit, referenceRange, status, notes, resultDate } = req.body;
+    if (!patientId || !testName || !resultValue || !resultDate) {
+      return res.status(400).json({ message: 'Missing lab result fields' });
+    }
+
+    const record = await createLabResult({
+      id: `lab-${Date.now()}`,
+      patientId,
+      doctorId: user.id,
+      testName,
+      resultValue,
+      unit,
+      referenceRange,
+      status,
+      notes,
+      resultDate,
+    });
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'create',
+      entityType: 'lab_result',
+      entityId: record.id,
+      details: { patientId: record.patientId, testName: record.testName, status: record.status },
+    });
+
+    return res.status(201).json({ data: record });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to create lab result' });
+  }
+});
+
+app.get('/api/documents', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const documents = user.role === 'patient'
+      ? await listDocumentsByOwner(user.id)
+      : await listDocuments();
+
+    return res.json({ data: documents.map(({ contentBase64, ...document }) => document) });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch documents' });
+  }
+});
+
+app.post('/api/documents', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const { ownerId, fileName, mimeType, contentBase64, description } = req.body;
+    const normalizedContentBase64 = normalizeBase64Document(contentBase64);
+    if (!ownerId || !fileName || !mimeType || !normalizedContentBase64) {
+      return res.status(400).json({ message: 'Missing document fields' });
+    }
+
+    if (user.role === 'patient' && ownerId !== user.id) {
+      return res.status(403).json({ message: 'Patients can only upload documents to their own record' });
+    }
+
+    if (!isValidBase64Document(normalizedContentBase64)) {
+      return res.status(400).json({ message: 'Document content must be valid base64' });
+    }
+
+    const documentBytes = Buffer.from(normalizedContentBase64, 'base64');
+    if (documentBytes.byteLength > maxDocumentBytes) {
+      return res.status(413).json({ message: 'Document must be 5 MB or smaller' });
+    }
+
+    const document = await createDocument({
+      id: `document-${Date.now()}`,
+      ownerId,
+      uploadedById: user.id,
+      fileName,
+      mimeType,
+      contentBase64: normalizedContentBase64,
+      description,
+    });
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'create',
+      entityType: 'document',
+      entityId: document.id,
+      details: { ownerId: document.ownerId, fileName: document.fileName },
+    });
+
+    return res.status(201).json({
+      data: {
+        ...document,
+        contentBase64: undefined,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to upload document' });
+  }
+});
+
+app.get('/api/documents/:id/download', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const document = await getDocumentById(req.params.id);
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    if (user.role === 'patient' && document.ownerId !== user.id) {
+      return res.status(403).json({ message: 'You can only download your own documents' });
+    }
+
+    const fileBuffer = Buffer.from(document.contentBase64, 'base64');
+    res.setHeader('Content-Type', document.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${sanitizeDownloadFileName(document.fileName)}"`);
+    return res.send(fileBuffer);
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to download document' });
+  }
+});
+
 app.get('/api/prescriptions', async (req, res) => {
   try {
     const user = await getAuthenticatedUser(req, res);
@@ -934,7 +1119,9 @@ async function start() {
     process.exit(1);
   }
 }
-if (process.env.NODE_ENV !== 'test') {
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (process.env.NODE_ENV !== 'test' && isDirectRun) {
   start();
 }
 
