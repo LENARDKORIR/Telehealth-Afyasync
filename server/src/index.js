@@ -11,12 +11,37 @@ import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, ver
 import { createAppointment, deleteAppointment, getAppointmentById, listAppointments, listAppointmentsByPatient, updateAppointment } from './appointments.js';
 import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
 import { listAuditEvents, logAuditEvent } from './audit.js';
+import { createMessage, listMessageThread } from './messages.js';
 import { seedDemoData } from './seedDemoData.js';
 
 dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT) || 8000;
+
+const getAuthenticatedUser = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(' ')[1];
+
+  if (!token) {
+    res.status(401).json({ message: 'Unauthorized' });
+    return null;
+  }
+
+  const payload = verifyToken(token);
+  if (!payload) {
+    res.status(401).json({ message: 'Invalid token' });
+    return null;
+  }
+
+  const user = await getUserById(payload.id);
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return null;
+  }
+
+  return user;
+};
 
 app.use(cors());
 app.use(express.json());
@@ -755,6 +780,55 @@ app.delete('/api/medical-records/:id', async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete medical record' });
+  }
+});
+
+app.get('/api/messages/thread/:otherUserId', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const messages = await listMessageThread(user.id, req.params.otherUserId);
+    return res.json({ data: messages });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch messages' });
+  }
+});
+
+app.post('/api/messages', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const { recipientId, subject, body } = req.body;
+    if (!recipientId || !subject || !body) {
+      return res.status(400).json({ message: 'Missing message fields' });
+    }
+
+    const message = await createMessage({
+      senderId: user.id,
+      recipientId,
+      subject,
+      body,
+    });
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'create',
+      entityType: 'message',
+      entityId: message.id,
+      details: { recipientId, subject },
+    });
+
+    return res.status(201).json({ data: message });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to send message' });
   }
 });
 

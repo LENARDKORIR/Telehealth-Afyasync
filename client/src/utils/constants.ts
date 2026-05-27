@@ -64,6 +64,10 @@ export const ENDPOINTS = {
   APPOINTMENTS: '/appointments',
   APPOINTMENT_DETAIL: (id: string) => `/appointments/${id}`,
 
+  // Messages
+  MESSAGES_THREAD: (otherUserId: string) => `/messages/thread/${otherUserId}`,
+  MESSAGES: '/messages',
+
   // Medical Records
   MEDICAL_RECORDS: '/medical-records',
   RECORD_DETAIL: (id: string) => `/medical-records/${id}`,
