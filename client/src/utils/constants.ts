@@ -68,6 +68,11 @@ export const ENDPOINTS = {
   MESSAGES_THREAD: (otherUserId: string) => `/messages/thread/${otherUserId}`,
   MESSAGES: '/messages',
 
+  // Prescriptions
+  PRESCRIPTIONS: '/prescriptions',
+  PRESCRIPTION_REFILL_REQUEST: (id: string) => `/prescriptions/${id}/refill-request`,
+  PRESCRIPTION_REFILL_COMPLETE: (id: string) => `/prescriptions/${id}/refill-complete`,
+
   // Medical Records
   MEDICAL_RECORDS: '/medical-records',
   RECORD_DETAIL: (id: string) => `/medical-records/${id}`,

@@ -76,6 +76,20 @@ const demoMedicalRecords = [
   },
 ];
 
+const demoPrescriptions = [
+  {
+    id: 'demo-prescription-1',
+    patientId: 'demo-patient',
+    doctorId: 'demo-doctor',
+    medicationName: 'Cetirizine',
+    dosage: '10 mg',
+    frequency: 'Once daily',
+    duration: '14 days',
+    instructions: 'Take with water in the evening and avoid known allergy triggers.',
+    status: 'active',
+  },
+];
+
 async function upsertDemoUser(user) {
   const existing = await getUserByEmail(user.email);
   if (existing) {
@@ -217,6 +231,59 @@ async function upsertDemoMedicalRecord(record) {
   );
 }
 
+async function upsertDemoPrescription(prescription) {
+  const now = new Date().toISOString();
+  await pool.query(
+    `
+      INSERT INTO prescriptions (
+        id,
+        patient_id,
+        doctor_id,
+        medication_name,
+        dosage,
+        frequency,
+        duration,
+        instructions,
+        status,
+        refill_requested_at,
+        last_refilled_at,
+        refill_notes,
+        created_at,
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      ON CONFLICT (id) DO UPDATE SET
+        patient_id = EXCLUDED.patient_id,
+        doctor_id = EXCLUDED.doctor_id,
+        medication_name = EXCLUDED.medication_name,
+        dosage = EXCLUDED.dosage,
+        frequency = EXCLUDED.frequency,
+        duration = EXCLUDED.duration,
+        instructions = EXCLUDED.instructions,
+        status = EXCLUDED.status,
+        refill_requested_at = EXCLUDED.refill_requested_at,
+        last_refilled_at = EXCLUDED.last_refilled_at,
+        refill_notes = EXCLUDED.refill_notes,
+        updated_at = EXCLUDED.updated_at
+    `,
+    [
+      prescription.id,
+      prescription.patientId,
+      prescription.doctorId,
+      prescription.medicationName,
+      prescription.dosage,
+      prescription.frequency,
+      prescription.duration,
+      prescription.instructions,
+      prescription.status,
+      prescription.refillRequestedAt ?? null,
+      prescription.lastRefilledAt ?? null,
+      prescription.refillNotes ?? null,
+      now,
+      now,
+    ]
+  );
+}
+
 export async function seedDemoData() {
   for (const user of demoUsers) {
     await upsertDemoUser(user);
@@ -230,5 +297,9 @@ export async function seedDemoData() {
 
   for (const record of demoMedicalRecords) {
     await upsertDemoMedicalRecord(record);
+  }
+
+  for (const prescription of demoPrescriptions) {
+    await upsertDemoPrescription(prescription);
   }
 }

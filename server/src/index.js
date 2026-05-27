@@ -12,6 +12,7 @@ import { createAppointment, deleteAppointment, getAppointmentById, listAppointme
 import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
 import { listAuditEvents, logAuditEvent } from './audit.js';
 import { createMessage, listMessageThread } from './messages.js';
+import { getPrescriptionById, listPrescriptions, listPrescriptionsByPatient, markPrescriptionRefilled, requestRefill } from './prescriptions.js';
 import { seedDemoData } from './seedDemoData.js';
 
 dotenv.config();
@@ -780,6 +781,94 @@ app.delete('/api/medical-records/:id', async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to delete medical record' });
+  }
+});
+
+app.get('/api/prescriptions', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    if (user.role === 'patient') {
+      const prescriptions = await listPrescriptionsByPatient(user.id);
+      return res.json({ data: prescriptions });
+    }
+
+    const prescriptions = await listPrescriptions();
+    return res.json({ data: prescriptions });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch prescriptions' });
+  }
+});
+
+app.post('/api/prescriptions/:id/refill-request', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    const prescription = await getPrescriptionById(req.params.id);
+    if (!prescription) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+
+    if (user.role === 'patient' && prescription.patientId !== user.id) {
+      return res.status(403).json({ message: 'You can only request refills for your own prescriptions' });
+    }
+
+    const updated = await requestRefill(req.params.id, req.body?.notes || '');
+    if (!updated) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'update',
+      entityType: 'prescription',
+      entityId: updated.id,
+      details: { status: updated.status, medicationName: updated.medicationName },
+    });
+
+    return res.json({ data: updated });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to request refill' });
+  }
+});
+
+app.put('/api/prescriptions/:id/refill-complete', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    if (user.role === 'patient') {
+      return res.status(403).json({ message: 'Patients cannot complete refill requests' });
+    }
+
+    const updated = await markPrescriptionRefilled(req.params.id, req.body?.notes || '');
+    if (!updated) {
+      return res.status(404).json({ message: 'Prescription not found' });
+    }
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'update',
+      entityType: 'prescription',
+      entityId: updated.id,
+      details: { status: updated.status, medicationName: updated.medicationName },
+    });
+
+    return res.json({ data: updated });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to update refill status' });
   }
 });
 

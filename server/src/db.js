@@ -86,6 +86,24 @@ export async function ensureDatabaseSchema() {
     );
   `);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS prescriptions (
+      id TEXT PRIMARY KEY,
+      patient_id TEXT NOT NULL,
+      doctor_id TEXT NOT NULL,
+      medication_name TEXT NOT NULL,
+      dosage TEXT NOT NULL,
+      frequency TEXT NOT NULL,
+      duration TEXT NOT NULL,
+      instructions TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('active', 'refill_requested', 'refilled', 'paused')),
+      refill_requested_at TIMESTAMPTZ,
+      last_refilled_at TIMESTAMPTZ,
+      refill_notes TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_logs (
       id TEXT PRIMARY KEY,
       actor_id TEXT,
