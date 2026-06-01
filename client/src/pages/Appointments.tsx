@@ -8,6 +8,7 @@ import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import api from '../services/api';
+import { getPatientLanguagePack } from '../utils/patientLanguage';
 
 type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
 
@@ -186,6 +187,7 @@ export const Appointments = () => {
   const { refreshNotifications } = useNotifications();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const languagePack = getPatientLanguagePack(user?.id);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -428,7 +430,7 @@ export const Appointments = () => {
             </h1>
             <p className="text-sm text-slate-500">
               {user?.role === 'patient'
-                ? 'Review your visits, notes, and next steps on any screen.'
+                ? languagePack.appointmentsSubtitle
                 : 'Reschedule, close, or delete appointments from one place.'}
             </p>
           </div>
@@ -526,7 +528,7 @@ export const Appointments = () => {
                   <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">Reminders</p>
-                      <p className="text-sm text-slate-500">Send a push, SMS, or email reminder with a reschedule link.</p>
+                      <p className="text-sm text-slate-500">{languagePack.reminderPrompt}</p>
                     </div>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -545,28 +547,28 @@ export const Appointments = () => {
                       onClick={() => void handleReminderChannel(appointment, 'push')}
                       className="inline-flex items-center justify-center rounded-xl border border-[#6a45f0]/20 bg-white px-3 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#f4eeff]"
                     >
-                      Push reminder
+                      {languagePack.pushReminderLabel}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleReminderChannel(appointment, 'sms')}
                       className="inline-flex items-center justify-center rounded-xl border border-[#6a45f0]/20 bg-white px-3 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#f4eeff]"
                     >
-                      SMS reminder
+                      {languagePack.smsReminderLabel}
                     </button>
                     <button
                       type="button"
                       onClick={() => void handleReminderChannel(appointment, 'email')}
                       className="inline-flex items-center justify-center rounded-xl border border-[#6a45f0]/20 bg-white px-3 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#f4eeff]"
                     >
-                      Email reminder
+                      {languagePack.emailReminderLabel}
                     </button>
                     <button
                       type="button"
                       onClick={() => void copyRescheduleLink(appointment)}
                       className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
-                      Copy reschedule link
+                      {languagePack.copyLinkLabel}
                     </button>
                   </div>
                 </div>

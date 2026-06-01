@@ -6,6 +6,7 @@ import { patientService } from '../services/patientService';
 import { recordsService } from '../services/recordsService';
 import type { Patient } from '../types/patient';
 import type { ClinicalDocument, LabResult, LabResultStatus } from '../types/record';
+import { getPatientLanguagePack } from '../utils/patientLanguage';
 
 const today = new Date().toISOString().slice(0, 10);
 const maxDocumentBytes = 5 * 1024 * 1024;
@@ -55,6 +56,7 @@ const downloadBlob = (blob: Blob, fileName: string) => {
 
 export const Records = () => {
   const { user } = useAuth();
+  const languagePack = getPatientLanguagePack(user?.id);
   const [activeTab, setActiveTab] = useState<'inbox' | 'labs' | 'documents'>('inbox');
   const [labResults, setLabResults] = useState<LabResult[]>([]);
   const [documents, setDocuments] = useState<ClinicalDocument[]>([]);
@@ -289,9 +291,9 @@ export const Records = () => {
       <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">Clinical records</p>
-            <h1 className="text-3xl font-black text-slate-900">Labs & Documents</h1>
-            <p className="text-sm text-slate-500">Review lab findings and shared patient files.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">{languagePack.pageLabel}</p>
+            <h1 className="text-3xl font-black text-slate-900">{languagePack.recordsTitle}</h1>
+            <p className="text-sm text-slate-500">{languagePack.recordsSubtitle}</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
@@ -313,7 +315,7 @@ export const Records = () => {
         <section className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Inbox</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{languagePack.inboxLabel}</p>
               <h2 className="mt-1 text-xl font-bold text-slate-900">Recent lab results and documents</h2>
               <p className="mt-1 text-sm text-slate-500">A single feed for new results, uploaded files, and compliance review.</p>
             </div>
@@ -364,7 +366,7 @@ export const Records = () => {
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            Inbox
+            {languagePack.inboxLabel}
           </button>
           <button
             type="button"
@@ -375,7 +377,7 @@ export const Records = () => {
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            Lab results
+            {languagePack.labsLabel}
           </button>
           <button
             type="button"
@@ -386,7 +388,7 @@ export const Records = () => {
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            Documents
+            {languagePack.documentsLabel}
           </button>
         </div>
 
@@ -665,7 +667,7 @@ export const Records = () => {
 
             <aside>
               <form onSubmit={handleDocumentSubmit} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-bold text-slate-900">Upload document</h2>
+                <h2 className="text-lg font-bold text-slate-900">{languagePack.uploadDocumentLabel}</h2>
                 <div className="mt-4 space-y-4">
                   {canChooseDocumentOwner && (
                     <div>

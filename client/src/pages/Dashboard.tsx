@@ -104,6 +104,15 @@ interface TaskQueueItem {
   actionLabel: string;
 }
 
+interface FollowUpTask {
+  patientId: string;
+  patientName: string;
+  statusLabel: string;
+  gapDays: number;
+  actionHref: string;
+  actionLabel: string;
+}
+
 const doctorDirectory: DoctorOption[] = [
   { id: 'dr-joyce-mwangi', name: 'Dr. Joyce Mwangi', specialty: 'Primary Care', focus: 'Routine visits, prescriptions, and follow-ups' },
   { id: 'dr-isaac-owen', name: 'Dr. Isaac Owen', specialty: 'Cardiology', focus: 'Heart health, cholesterol, and blood pressure' },
@@ -435,6 +444,17 @@ export const Dashboard = () => {
     : user?.role === 'admin'
       ? 'Administrative work is grouped for compliance review and export.'
       : 'Prioritize inbox follow-up, schedule management, and refill review.';
+
+  const followUpTasks: FollowUpTask[] = user?.role !== 'patient'
+    ? (followUpGaps?.patients || []).map((patient) => ({
+        patientId: patient.patientId,
+        patientName: patient.patientName,
+        statusLabel: patient.lastAppointmentStatus || 'care gap',
+        gapDays: patient.gapDays,
+        actionHref: `/messages?contact=${encodeURIComponent(patient.patientId)}`,
+        actionLabel: 'Message patient',
+      }))
+    : [];
 
   const handleRequestChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -959,6 +979,51 @@ export const Dashboard = () => {
               </div>
             </section>
           </div>
+        )}
+
+        {user?.role !== 'patient' && followUpTasks.length > 0 && (
+          <section className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-md sm:p-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">Care plans</p>
+                <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">Follow-up tasks to close care gaps intentionally</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                  Each task pairs a patient gap with the next concrete action so providers can close the loop instead of only reviewing metrics.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+              {followUpTasks.map((task) => (
+                <article key={task.patientId} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Follow-up task</p>
+                      <h3 className="mt-1 wrap-break-word text-lg font-bold text-slate-900">{task.patientName}</h3>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {task.gapDays} day gap · {task.statusLabel}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+                      Open
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-3 rounded-2xl bg-white p-4 text-sm text-slate-600 shadow-sm">
+                    <p>Review recent care, send a check-in, and plan the next visit.</p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Link to={task.actionHref} className="inline-flex items-center justify-center rounded-xl bg-[#6a45f0] px-3 py-2 font-semibold text-white transition hover:bg-[#5638d6]">
+                        {task.actionLabel}
+                      </Link>
+                      <Link to="/appointments" className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 font-semibold text-slate-700 transition hover:bg-slate-50">
+                        Schedule follow-up
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Charts Section */}

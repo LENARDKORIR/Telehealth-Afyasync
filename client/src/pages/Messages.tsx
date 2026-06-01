@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import api from '../services/api';
 import { messageService } from '../services/messageService';
+import { getPatientLanguagePack } from '../utils/patientLanguage';
 import type { Message, MessageContact } from '../types/message';
 
 const doctorContacts: MessageContact[] = [
@@ -32,6 +33,7 @@ const formatClock = (value: string) =>
 export const Messages = () => {
   const { user } = useAuth();
   const { refreshNotifications } = useNotifications();
+  const languagePack = getPatientLanguagePack(user?.id);
   const [searchParams] = useSearchParams();
   const requestedContactId = searchParams.get('contact') || '';
   const urgentSubject = searchParams.get('subject') || '';
@@ -175,9 +177,9 @@ export const Messages = () => {
       <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">Secure Inbox</p>
-            <h1 className="text-3xl font-black text-slate-900">Messages</h1>
-            <p className="text-sm text-slate-500">Private threads between patients and providers.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">{languagePack.pageLabel}</p>
+            <h1 className="text-3xl font-black text-slate-900">{languagePack.messagesTitle}</h1>
+            <p className="text-sm text-slate-500">{languagePack.messagesSubtitle}</p>
           </div>
         </div>
 
@@ -202,9 +204,9 @@ export const Messages = () => {
 
         <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
           <aside className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Contacts</p>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{languagePack.contactsLabel}</p>
             {loadingContacts ? (
-              <div className="text-sm text-slate-500">Loading contacts...</div>
+              <div className="text-sm text-slate-500">{languagePack.loadingContactsLabel}</div>
             ) : contacts.length > 0 ? (
               <div className="space-y-2">
                 {contacts.map((contact) => (
@@ -224,21 +226,21 @@ export const Messages = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-slate-500">No contacts available.</div>
+              <div className="text-sm text-slate-500">{languagePack.noContactsLabel}</div>
             )}
           </aside>
 
           <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Conversation</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{languagePack.conversationLabel}</p>
               <h2 className="text-xl font-bold text-slate-900">
-                {selectedContact ? getContactLabel(selectedContact) : 'Choose a contact'}
+                {selectedContact ? getContactLabel(selectedContact) : languagePack.chooseContactLabel}
               </h2>
             </div>
 
             <div className="max-h-130 min-h-80 space-y-4 overflow-y-auto bg-slate-50 px-5 py-5 sm:px-6">
               {loadingThread ? (
-                <div className="text-sm text-slate-500">Loading messages...</div>
+                <div className="text-sm text-slate-500">{languagePack.loadingThreadLabel}</div>
               ) : messages.length > 0 ? (
                 messages.map((message) => {
                   const isMine = message.senderId === user?.id;
@@ -266,11 +268,11 @@ export const Messages = () => {
                 })
               ) : selectedContact ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">
-                  No messages yet. Start the conversation below.
+                  {languagePack.noMessagesLabel}
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-10 text-center text-sm text-slate-500">
-                  Select a contact to view the conversation.
+                  {languagePack.chooseContactLabel}
                 </div>
               )}
             </div>
@@ -278,7 +280,7 @@ export const Messages = () => {
             <form onSubmit={handleSend} className="space-y-4 border-t border-slate-200 bg-white px-5 py-5 sm:px-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Subject</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">{languagePack.subjectLabel}</label>
                   <input
                     type="text"
                     value={form.subject}
@@ -295,7 +297,7 @@ export const Messages = () => {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Message</label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">{languagePack.messageLabel}</label>
                 <textarea
                   value={form.body}
                   onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))}
@@ -310,7 +312,7 @@ export const Messages = () => {
                 disabled={sending || !selectedContactId}
                 className="inline-flex items-center justify-center rounded-2xl bg-[#8e171b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#741215] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {sending ? 'Sending...' : 'Send securely'}
+                {sending ? 'Sending...' : languagePack.sendLabel}
               </button>
             </form>
           </section>
