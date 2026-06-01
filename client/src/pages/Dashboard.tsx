@@ -97,6 +97,13 @@ interface PatientCareStep {
   tone: 'primary' | 'secondary' | 'tertiary' | 'warning' | 'success';
 }
 
+interface TaskQueueItem {
+  title: string;
+  description: string;
+  href: string;
+  actionLabel: string;
+}
+
 const doctorDirectory: DoctorOption[] = [
   { id: 'dr-joyce-mwangi', name: 'Dr. Joyce Mwangi', specialty: 'Primary Care', focus: 'Routine visits, prescriptions, and follow-ups' },
   { id: 'dr-isaac-owen', name: 'Dr. Isaac Owen', specialty: 'Cardiology', focus: 'Heart health, cholesterol, and blood pressure' },
@@ -159,6 +166,60 @@ const patientCareSteps: PatientCareStep[] = [
     href: '/emergency',
     label: 'Open escalation',
     tone: 'warning',
+  },
+];
+
+const doctorTaskQueue: TaskQueueItem[] = [
+  {
+    title: 'Review patient messages',
+    description: 'Answer secure inbox threads and urgent symptom escalations.',
+    href: '/messages',
+    actionLabel: 'Open messages',
+  },
+  {
+    title: 'Close today’s appointments',
+    description: 'Reschedule, complete, or delete visits from the appointment board.',
+    href: '/appointments',
+    actionLabel: 'Manage schedule',
+  },
+  {
+    title: 'Check refill requests',
+    description: 'Review prescriptions that need refilling or provider approval.',
+    href: '/prescriptions',
+    actionLabel: 'Review refills',
+  },
+  {
+    title: 'Monitor care gaps',
+    description: 'Use the analytics tiles to catch no-shows and follow-up gaps early.',
+    href: '/dashboard',
+    actionLabel: 'View analytics',
+  },
+];
+
+const adminTaskQueue: TaskQueueItem[] = [
+  {
+    title: 'Review audit logs',
+    description: 'Inspect compliance events, filters, and recent activity trends.',
+    href: '/dashboard',
+    actionLabel: 'Open audit panel',
+  },
+  {
+    title: 'Export compliance data',
+    description: 'Download the current audit log view for review or archive.',
+    href: '/dashboard',
+    actionLabel: 'Export CSV',
+  },
+  {
+    title: 'Watch provider analytics',
+    description: 'Track patient volume, no-shows, and follow-up gaps across the clinic.',
+    href: '/dashboard',
+    actionLabel: 'Open analytics',
+  },
+  {
+    title: 'Check operational alerts',
+    description: 'Use the notification feed and audit trail to spot issues quickly.',
+    href: '/messages',
+    actionLabel: 'Review alerts',
   },
 ];
 
@@ -352,6 +413,29 @@ export const Dashboard = () => {
     ...(patientVolume?.trend || []).flatMap((point) => [point.patients, point.appointments])
   );
 
+  const activeTaskQueue = user?.role === 'patient'
+    ? patientCareSteps.map((step) => ({
+        title: step.title,
+        description: step.description,
+        href: step.href,
+        actionLabel: step.label,
+      }))
+    : user?.role === 'admin'
+      ? adminTaskQueue
+      : doctorTaskQueue;
+
+  const queueTitle = user?.role === 'patient'
+    ? 'Care queue'
+    : user?.role === 'admin'
+      ? 'Compliance queue'
+      : 'Clinical queue';
+
+  const queueSubtitle = user?.role === 'patient'
+    ? 'Your next steps are organized by the tasks patients use most.'
+    : user?.role === 'admin'
+      ? 'Administrative work is grouped for compliance review and export.'
+      : 'Prioritize inbox follow-up, schedule management, and refill review.';
+
   const handleRequestChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -446,6 +530,39 @@ export const Dashboard = () => {
             Role: <span className="font-semibold capitalize">{user?.role}</span>
           </p>
         </div>
+
+        <section className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-md sm:p-8">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">{queueTitle}</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
+                {user?.role === 'patient'
+                  ? 'Move through your care tasks in order'
+                  : user?.role === 'admin'
+                    ? 'Review compliance work and export logs'
+                    : 'Keep today’s clinical work moving'}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{queueSubtitle}</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {activeTaskQueue.map((task) => (
+              <Link
+                key={task.title}
+                to={task.href}
+                className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-[#6a45f0]/25 hover:bg-[#f7f4ff] hover:shadow-sm"
+              >
+                <h3 className="text-lg font-bold text-slate-900">{task.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{task.description}</p>
+                <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#6a45f0]">
+                  {task.actionLabel}
+                  <span className="transition group-hover:translate-x-1">→</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {user?.role === 'patient' ? (
           <>
@@ -882,13 +999,20 @@ export const Dashboard = () => {
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow-md">
-            <h3 className="mb-4 text-lg font-bold text-gray-800">
-              {user?.role === 'admin' ? 'System Audit Log' : 'Recent Activity'}
-            </h3>
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <h3 className="text-lg font-bold text-gray-800">
+                {user?.role === 'admin' ? 'Compliance audit log' : 'Recent activity'}
+              </h3>
+              {user?.role === 'admin' && (
+                <p className="text-sm text-slate-500">
+                  Filter, review, and export audit records for compliance checks.
+                </p>
+              )}
+            </div>
             <div className="space-y-4">
               {user?.role === 'admin' ? (
                 <div>
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                     <input placeholder="User or actor id" value={auditFilters.user} onChange={(e) => setAuditFilters((p) => ({...p, user: e.target.value}))} className="rounded-md border px-3 py-2" />
                     <input placeholder="Role" value={auditFilters.role} onChange={(e) => setAuditFilters((p) => ({...p, role: e.target.value}))} className="rounded-md border px-3 py-2" />
                     <input placeholder="Action" value={auditFilters.action} onChange={(e) => setAuditFilters((p) => ({...p, action: e.target.value}))} className="rounded-md border px-3 py-2" />
