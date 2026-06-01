@@ -8,6 +8,7 @@ import { messageService } from '../services/messageService';
 import type { Message, MessageContact } from '../types/message';
 
 const doctorContacts: MessageContact[] = [
+  { id: 'urgent-care-team', name: 'Urgent Care Team', role: 'doctor', subtitle: 'Emergency escalation' },
   { id: 'dr-joyce-mwangi', name: 'Dr. Joyce Mwangi', role: 'doctor', subtitle: 'Primary Care' },
   { id: 'dr-isaac-owen', name: 'Dr. Isaac Owen', role: 'doctor', subtitle: 'Cardiology' },
   { id: 'dr-nadia-kamau', name: 'Dr. Nadia Kamau', role: 'doctor', subtitle: 'Mental Health' },
@@ -33,6 +34,9 @@ export const Messages = () => {
   const { refreshNotifications } = useNotifications();
   const [searchParams] = useSearchParams();
   const requestedContactId = searchParams.get('contact') || '';
+  const urgentSubject = searchParams.get('subject') || '';
+  const urgentBody = searchParams.get('body') || '';
+  const urgentMode = searchParams.get('urgent') === '1' || requestedContactId === 'urgent-care-team';
   const [contacts, setContacts] = useState<MessageContact[]>([]);
   const [selectedContactId, setSelectedContactId] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -93,6 +97,18 @@ export const Messages = () => {
 
     void loadContacts();
   }, [requestedContactId, user?.id, user?.role]);
+
+  useEffect(() => {
+    if (!urgentSubject && !urgentBody) {
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      subject: urgentSubject || current.subject,
+      body: urgentBody || current.body,
+    }));
+  }, [urgentBody, urgentSubject]);
 
   useEffect(() => {
     const loadThread = async () => {
@@ -164,6 +180,13 @@ export const Messages = () => {
             <p className="text-sm text-slate-500">Private threads between patients and providers.</p>
           </div>
         </div>
+
+        {urgentMode && (
+          <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            Urgent symptom escalation is open. If this feels life-threatening, call your local emergency number now.
+            The message below is prefilled for the care team.
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">

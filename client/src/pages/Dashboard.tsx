@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
@@ -19,6 +20,46 @@ interface DashboardStats {
   myAppointments?: number;
   upcomingAppointments?: number;
   completedRecords?: number;
+  patientVolume?: PatientVolumeAnalytics;
+  noShows?: NoShowAnalytics;
+  followUpGaps?: FollowUpGapAnalytics;
+}
+
+interface ProviderVolumeTrendPoint {
+  label: string;
+  patients: number;
+  appointments: number;
+}
+
+interface PatientVolumeAnalytics {
+  totalPatients: number;
+  activePatients30d: number;
+  previousActivePatients30d: number;
+  activePatientChangePercent: number;
+  newPatients30d: number;
+  appointments30d: number;
+  trend: ProviderVolumeTrendPoint[];
+}
+
+interface NoShowAnalytics {
+  count30d: number;
+  rate30d: number;
+  totalCount: number;
+  affectedPatients30d: number;
+}
+
+interface FollowUpGapPatient {
+  patientId: string;
+  patientName: string;
+  lastCareDate: string;
+  gapDays: number;
+  lastAppointmentStatus?: string | null;
+}
+
+interface FollowUpGapAnalytics {
+  count: number;
+  thresholdDays: number;
+  patients: FollowUpGapPatient[];
 }
 
 interface DoctorOption {
@@ -48,6 +89,14 @@ interface AuditLogEntry {
   createdAt: string;
 }
 
+interface PatientCareStep {
+  title: string;
+  description: string;
+  href: string;
+  label: string;
+  tone: 'primary' | 'secondary' | 'tertiary' | 'warning' | 'success';
+}
+
 const doctorDirectory: DoctorOption[] = [
   { id: 'dr-joyce-mwangi', name: 'Dr. Joyce Mwangi', specialty: 'Primary Care', focus: 'Routine visits, prescriptions, and follow-ups' },
   { id: 'dr-isaac-owen', name: 'Dr. Isaac Owen', specialty: 'Cardiology', focus: 'Heart health, cholesterol, and blood pressure' },
@@ -60,6 +109,51 @@ const doctorDirectory: DoctorOption[] = [
 ];
 
 const appointmentStatuses = new Set(['completed', 'cancelled', 'no-show']);
+
+const patientCareSteps: PatientCareStep[] = [
+  {
+    title: 'Messaging',
+    description: 'Send a secure question or update to your care team.',
+    href: '/messages',
+    label: 'Open inbox',
+    tone: 'primary',
+  },
+  {
+    title: 'Appointment reminders',
+    description: 'Review upcoming visits and keep your schedule on track.',
+    href: '/appointments',
+    label: 'View appointments',
+    tone: 'secondary',
+  },
+  {
+    title: 'Prescription workflow',
+    description: 'Request refills and track medication status in one place.',
+    href: '/prescriptions',
+    label: 'Manage refills',
+    tone: 'success',
+  },
+  {
+    title: 'Lab results & documents',
+    description: 'Review reports, scans, and care documents when they arrive.',
+    href: '/records',
+    label: 'Open records',
+    tone: 'tertiary',
+  },
+  {
+    title: 'Video visits',
+    description: 'Join your next telehealth appointment from the waiting room.',
+    href: '/appointments',
+    label: 'Go to visits',
+    tone: 'primary',
+  },
+  {
+    title: 'Urgent symptoms',
+    description: 'Escalate urgent symptoms to the care team right away.',
+    href: '/messages?contact=urgent-care-team&subject=Urgent%20symptoms&body=I%20need%20urgent%20help%20from%20the%20care%20team.',
+    label: 'Escalate now',
+    tone: 'warning',
+  },
+];
 
 const initialSpecialty = doctorDirectory[0]?.specialty || 'Primary Care';
 const initialDoctors = doctorDirectory.filter((doctor) => doctor.specialty === initialSpecialty);
@@ -75,9 +169,27 @@ const addOneHour = (time: string) => {
   return `${String(endHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
+const formatSignedPercent = (value?: number) => {
+  const safeValue = value || 0;
+  return `${safeValue > 0 ? '+' : ''}${safeValue}%`;
+};
+
+const formatShortDate = (value?: string | null) => {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
 export const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({});
+  const [nextVideoVisitId, setNextVideoVisitId] = useState('');
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [auditFilters, setAuditFilters] = useState({
     user: '',
@@ -116,9 +228,17 @@ export const Dashboard = () => {
 
       const appointments = appointmentsRes.data.data || [];
       const records = recordsRes.data.data || [];
+      const upcomingVideoVisit = [...appointments]
+        .filter((appointment: any) => appointment.status === 'scheduled')
+        .sort((left: any, right: any) => {
+          const leftDate = new Date(`${left.appointmentDate}T${left.startTime}`).getTime();
+          const rightDate = new Date(`${right.appointmentDate}T${right.startTime}`).getTime();
+          return leftDate - rightDate;
+        })[0];
       const actualAppointments = appointments.filter((appointment: any) => appointment.status === 'scheduled').length;
       const closedAppointments = appointments.filter((appointment: any) => appointmentStatuses.has(appointment.status)).length;
 
+      setNextVideoVisitId(upcomingVideoVisit?.id || '');
       setStats({
         myAppointments: appointments.length,
         totalAppointments: appointments.length,
@@ -135,7 +255,7 @@ export const Dashboard = () => {
     }
   };
 
-  const loadAdminDashboard = async () => {
+  const loadProviderDashboard = async (includeAuditLogs: boolean) => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -143,16 +263,22 @@ export const Dashboard = () => {
     try {
       const [statsRes, logsRes] = await Promise.all([
         api.get('/dashboard/stats').catch(() => ({ data: { data: {} } })),
-        api.get('/audit-logs?limit=12').catch(() => ({ data: { data: [] } })),
+        includeAuditLogs
+          ? api.get('/audit-logs?limit=12').catch(() => ({ data: { data: [] } }))
+          : Promise.resolve({ data: { data: [] } }),
       ]);
 
       setStats(statsRes.data.data || {});
       setAuditLogs(logsRes.data.data || []);
     } catch (error) {
-      console.error('Failed to load admin dashboard:', error);
+      console.error('Failed to load provider dashboard:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadAdminDashboard = async () => {
+    await loadProviderDashboard(true);
   };
 
   const fetchFilteredAudit = async () => {
@@ -207,24 +333,17 @@ export const Dashboard = () => {
       return;
     }
 
-    if (user.role === 'admin') {
-      void loadAdminDashboard();
-      return;
-    }
-
-    setLoading(true);
-    setStats({
-      totalPatients: 145,
-      appointmentsToday: 12,
-      pendingReports: 8,
-      criticalCases: 3,
-      totalAppointments: 892,
-      completedAppointments: 756,
-    });
-    setLoading(false);
+    void loadProviderDashboard(user.role === 'admin');
   }, [user]);
 
   const selectedDoctor = availableDoctors.find((doctor) => doctor.id === requestForm.doctorId) || availableDoctors[0];
+  const patientVolume = stats.patientVolume;
+  const noShows = stats.noShows;
+  const followUpGaps = stats.followUpGaps;
+  const providerTrendMax = Math.max(
+    1,
+    ...(patientVolume?.trend || []).flatMap((point) => [point.patients, point.appointments])
+  );
 
   const handleRequestChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -468,6 +587,67 @@ export const Dashboard = () => {
               </form>
             </div>
 
+            <section className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-md sm:p-8">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">
+                    Step-by-step care
+                  </p>
+                  <h2 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
+                    Jump into the highest-impact workflows
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                    Messaging, reminders, refills, records, and video visits are grouped here so you can move through care in a predictable order.
+                  </p>
+                </div>
+
+                <Link
+                  to="/settings"
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Review preferences
+                </Link>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {patientCareSteps.map((step) => {
+                  const resolvedHref = step.title === 'Video visits' && nextVideoVisitId
+                    ? `/video-visits/${nextVideoVisitId}`
+                    : step.href;
+
+                  const toneStyles: Record<PatientCareStep['tone'], string> = {
+                    primary: 'border-[#6a45f0]/20 bg-[#f6f2ff] text-[#4c2fc0]',
+                    secondary: 'border-slate-200 bg-slate-50 text-slate-700',
+                    tertiary: 'border-cyan-200 bg-cyan-50 text-cyan-700',
+                    warning: 'border-rose-200 bg-rose-50 text-rose-700',
+                    success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                  };
+
+                  return (
+                    <Link
+                      key={step.title}
+                      to={resolvedHref}
+                      className={`group rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-sm ${toneStyles[step.tone]}`}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] opacity-80">Step</p>
+                      <h3 className="mt-2 text-xl font-bold text-slate-900">{step.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+                      <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
+                        {step.label}
+                        <span className="transition group-hover:translate-x-1">→</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {nextVideoVisitId && (
+                <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  Your next scheduled video visit is ready to open from the card above.
+                </div>
+              )}
+            </section>
+
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="rounded-2xl bg-white p-6 shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between">
@@ -505,42 +685,155 @@ export const Dashboard = () => {
             <div className="rounded-2xl bg-white p-6 shadow-md hover:shadow-lg transition">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">Total Patients</p>
-                  <p className="text-3xl font-bold text-gray-800">{stats.totalPatients}</p>
+                  <p className="text-gray-600 text-sm">Patient Volume</p>
+                  <p className="text-3xl font-bold text-gray-800">{patientVolume?.activePatients30d ?? 0}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {formatSignedPercent(patientVolume?.activePatientChangePercent)} vs prior 30 days
+                  </p>
                 </div>
-                <span className="text-4xl">👥</span>
+                <span className="text-sm font-bold text-slate-400">30d</span>
               </div>
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-md hover:shadow-lg transition">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">Appointments Today</p>
-                  <p className="text-3xl font-bold text-blue-600">{stats.appointmentsToday}</p>
+                  <p className="text-gray-600 text-sm">New Patients</p>
+                  <p className="text-3xl font-bold text-blue-600">{patientVolume?.newPatients30d ?? 0}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {stats.appointmentsToday || 0} appointments today
+                  </p>
                 </div>
-                <span className="text-4xl">📅</span>
+                <span className="text-sm font-bold text-slate-400">30d</span>
               </div>
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-md hover:shadow-lg transition">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">Pending Reports</p>
-                  <p className="text-3xl font-bold text-yellow-600">{stats.pendingReports}</p>
+                  <p className="text-gray-600 text-sm">No-show Rate</p>
+                  <p className="text-3xl font-bold text-yellow-600">{noShows?.rate30d ?? 0}%</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {noShows?.count30d ?? 0} missed visits
+                  </p>
                 </div>
-                <span className="text-4xl">📄</span>
+                <span className="text-sm font-bold text-slate-400">30d</span>
               </div>
             </div>
 
             <div className="rounded-2xl bg-white p-6 shadow-md hover:shadow-lg transition">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">Critical Cases</p>
-                  <p className="text-3xl font-bold text-red-600">{stats.criticalCases}</p>
+                  <p className="text-gray-600 text-sm">Follow-up Gaps</p>
+                  <p className="text-3xl font-bold text-red-600">{followUpGaps?.count ?? 0}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    Past {followUpGaps?.thresholdDays ?? 30} days without next visit
+                  </p>
                 </div>
-                <span className="text-4xl">🚨</span>
+                <span className="text-sm font-bold text-slate-400">Care</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {user?.role !== 'patient' && (
+          <div className="mb-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <section className="rounded-2xl bg-white p-6 shadow-md">
+              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Patient volume trend</h2>
+                  <p className="text-sm text-slate-500">
+                    Weekly unique patients and appointment load from the last six weeks.
+                  </p>
+                </div>
+                <div className="text-sm font-semibold text-slate-600">
+                  {patientVolume?.appointments30d ?? 0} visits in 30 days
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {(patientVolume?.trend || []).map((point) => (
+                  <div key={point.label} className="grid gap-2 sm:grid-cols-[88px_1fr_96px] sm:items-center">
+                    <div className="text-sm font-semibold text-slate-600">{point.label}</div>
+                    <div className="space-y-2">
+                      <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-[#6a45f0]"
+                          style={{ width: `${Math.max(4, Math.round((point.patients / providerTrendMax) * 100))}%` }}
+                        />
+                      </div>
+                      <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-[#8e171b]"
+                          style={{ width: `${Math.max(4, Math.round((point.appointments / providerTrendMax) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      <span className="font-semibold text-slate-900">{point.patients}</span> patients
+                      <br />
+                      <span className="font-semibold text-slate-900">{point.appointments}</span> visits
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-4 text-sm text-slate-600">
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-[#6a45f0]" />
+                  Unique patients
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full bg-[#8e171b]" />
+                  Appointments
+                </span>
+              </div>
+            </section>
+
+            <section className="rounded-2xl bg-white p-6 shadow-md">
+              <h2 className="text-xl font-bold text-slate-900">Care follow-up signals</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-semibold text-amber-800">No-shows</p>
+                  <p className="mt-2 text-3xl font-black text-amber-900">{noShows?.count30d ?? 0}</p>
+                  <p className="mt-1 text-sm text-amber-800">
+                    {noShows?.affectedPatients30d ?? 0} patients, {noShows?.rate30d ?? 0}% of visits
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                  <p className="text-sm font-semibold text-rose-800">Follow-up gaps</p>
+                  <p className="mt-2 text-3xl font-black text-rose-900">{followUpGaps?.count ?? 0}</p>
+                  <p className="mt-1 text-sm text-rose-800">
+                    Patients without a scheduled next visit
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {(followUpGaps?.patients || []).length > 0 ? (
+                  followUpGaps?.patients.map((patient) => (
+                    <div key={patient.patientId} className="rounded-2xl border border-slate-200 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="wrap-break-word font-semibold text-slate-900">{patient.patientName}</p>
+                          <p className="mt-1 text-sm text-slate-500">
+                            Last care {formatShortDate(patient.lastCareDate)}
+                            {patient.lastAppointmentStatus ? ` - ${patient.lastAppointmentStatus}` : ''}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
+                          {patient.gapDays}d
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                    No follow-up gaps detected.
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
         )}
 
@@ -557,7 +850,7 @@ export const Dashboard = () => {
                     <p className="mb-4 text-gray-600">
                       Actual: {stats.actualAppointments || 0} / Closed: {stats.closedAppointments || 0}
                     </p>
-                    <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-r from-[#6a45f0] to-[#8e171b] text-2xl font-bold text-white">
+                    <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-linear-to-r from-[#6a45f0] to-[#8e171b] text-2xl font-bold text-white">
                       {stats.myAppointments
                         ? Math.round(((stats.closedAppointments || 0) / (stats.myAppointments || 1)) * 100)
                         : 0}
@@ -569,7 +862,7 @@ export const Dashboard = () => {
                     <p className="mb-4 text-gray-600">
                       Completed: {stats.completedAppointments || 0} / {stats.totalAppointments || 0}
                     </p>
-                    <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-r from-blue-400 to-blue-600 text-2xl font-bold text-white">
+                    <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-linear-to-r from-blue-400 to-blue-600 text-2xl font-bold text-white">
                       {stats.totalAppointments
                         ? Math.round(((stats.completedAppointments || 0) / (stats.totalAppointments || 1)) * 100)
                         : 0}
@@ -612,7 +905,7 @@ export const Dashboard = () => {
                             {entry.actorRole || 'system'} • {entry.entityId || 'n/a'} • {new Date(entry.createdAt).toLocaleString()}
                           </p>
                           {entry.details && Object.keys(entry.details).length > 0 && (
-                            <p className="mt-1 break-words text-xs text-gray-500">
+                            <p className="mt-1 wrap-break-word text-xs text-gray-500">
                               {JSON.stringify(entry.details)}
                             </p>
                           )}
