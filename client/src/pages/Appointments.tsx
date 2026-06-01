@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
@@ -31,6 +31,8 @@ interface AppointmentEditForm {
   reason: string;
   notes: string;
 }
+
+type ReminderChannel = 'push' | 'sms' | 'email';
 
 const reminderOptions = [
   { label: '15 minutes before', minutes: 15 },
@@ -123,6 +125,28 @@ const buildGoogleCalendarUrl = (appointment: Appointment, doctorView: boolean) =
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
 
+const buildRescheduleLink = (appointmentId: string) => {
+  if (typeof window === 'undefined') {
+    return `/appointments?edit=${appointmentId}`;
+  }
+
+  return `${window.location.origin}/appointments?edit=${appointmentId}`;
+};
+
+const buildReminderMessage = (appointment: Appointment, rescheduleLink: string) =>
+  `Reminder: ${appointment.reason} on ${appointment.appointmentDate} at ${appointment.startTime}. Reschedule here: ${rescheduleLink}`;
+
+const buildChannelUrl = (channel: ReminderChannel, subject: string, body: string) => {
+  const encodedSubject = encodeURIComponent(subject);
+  const encodedBody = encodeURIComponent(body);
+
+  if (channel === 'sms') {
+    return `sms:?&body=${encodedBody}`;
+  }
+
+  return `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+};
+
 const buildIcsContent = (appointment: Appointment, doctorView: boolean) => {
   const title = buildAppointmentTitle(appointment, doctorView);
   const description = `${appointment.reason}${appointment.notes ? `\\n\\nNotes: ${appointment.notes}` : ''}`;
@@ -161,6 +185,7 @@ export const Appointments = () => {
   const { user } = useAuth();
   const { refreshNotifications } = useNotifications();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -195,6 +220,18 @@ export const Appointments = () => {
   useEffect(() => {
     void loadAppointments();
   }, [user?.id, user?.role]);
+
+  useEffect(() => {
+    const appointmentId = searchParams.get('edit');
+    if (!appointmentId || user?.role === 'patient') {
+      return;
+    }
+
+    const appointment = appointments.find((item) => item.id === appointmentId);
+    if (appointment) {
+      beginReschedule(appointment);
+    }
+  }, [appointments, searchParams, user?.role]);
 
   const beginReschedule = (appointment: Appointment) => {
     setStatusError('');
@@ -264,6 +301,31 @@ export const Appointments = () => {
     }, delay);
 
     setReminderMessage(`Reminder scheduled for ${minutesBefore} minutes before this appointment.`);
+  };
+
+  const handleReminderChannel = async (appointment: Appointment, channel: ReminderChannel) => {
+    const rescheduleLink = buildRescheduleLink(appointment.id);
+    const subject = `Appointment reminder for ${appointment.reason}`;
+    const body = buildReminderMessage(appointment, rescheduleLink);
+
+    if (channel === 'push') {
+      await requestReminder(appointment, 60);
+      return;
+    }
+
+    const targetUrl = buildChannelUrl(channel, subject, body);
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    setReminderMessage(
+      channel === 'sms'
+        ? 'SMS reminder draft opened with a reschedule link.'
+        : 'Email reminder draft opened with a reschedule link.'
+    );
+  };
+
+  const copyRescheduleLink = async (appointment: Appointment) => {
+    const rescheduleLink = buildRescheduleLink(appointment.id);
+    await navigator.clipboard.writeText(rescheduleLink);
+    setReminderMessage('Reschedule link copied to clipboard.');
   };
 
   const saveReschedule = async (appointment: Appointment) => {
@@ -464,10 +526,10 @@ export const Appointments = () => {
                   <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">Reminders</p>
-                      <p className="text-sm text-slate-500">Get a browser notification before this visit starts.</p>
+                      <p className="text-sm text-slate-500">Send a push, SMS, or email reminder with a reschedule link.</p>
                     </div>
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                     {reminderOptions.map((option) => (
                       <button
                         key={option.minutes}
@@ -478,6 +540,34 @@ export const Appointments = () => {
                         {option.label}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => void handleReminderChannel(appointment, 'push')}
+                      className="inline-flex items-center justify-center rounded-xl border border-[#6a45f0]/20 bg-white px-3 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#f4eeff]"
+                    >
+                      Push reminder
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleReminderChannel(appointment, 'sms')}
+                      className="inline-flex items-center justify-center rounded-xl border border-[#6a45f0]/20 bg-white px-3 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#f4eeff]"
+                    >
+                      SMS reminder
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleReminderChannel(appointment, 'email')}
+                      className="inline-flex items-center justify-center rounded-xl border border-[#6a45f0]/20 bg-white px-3 py-2 text-sm font-semibold text-[#6a45f0] transition hover:bg-[#f4eeff]"
+                    >
+                      Email reminder
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void copyRescheduleLink(appointment)}
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      Copy reschedule link
+                    </button>
                   </div>
                 </div>
 
