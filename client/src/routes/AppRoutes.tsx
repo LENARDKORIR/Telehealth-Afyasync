@@ -16,6 +16,8 @@ import { Messages } from '../pages/Messages';
 import { VideoVisit } from '../pages/VideoVisit';
 import { Prescriptions } from '../pages/Prescriptions';
 import { Records } from '../pages/Records';
+import { Intake } from '../pages/Intake';
+import { Emergency } from '../pages/Emergency';
 import { HealthTopic } from '../pages/HealthTopic';
 import { Reports } from '../pages/Reports';
 import { Settings } from '../pages/Settings';
@@ -82,6 +84,22 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Records />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/intake"
+        element={
+          <ProtectedRoute>
+            <Intake />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/emergency"
+        element={
+          <ProtectedRoute>
+            <Emergency />
           </ProtectedRoute>
         }
       />

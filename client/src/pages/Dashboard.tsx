@@ -140,6 +140,13 @@ const patientCareSteps: PatientCareStep[] = [
     tone: 'tertiary',
   },
   {
+    title: 'Patient intake',
+    description: 'Complete your pre-visit questionnaire before the appointment.',
+    href: '/intake',
+    label: 'Fill intake',
+    tone: 'secondary',
+  },
+  {
     title: 'Video visits',
     description: 'Join your next telehealth appointment from the waiting room.',
     href: '/appointments',
@@ -147,10 +154,10 @@ const patientCareSteps: PatientCareStep[] = [
     tone: 'primary',
   },
   {
-    title: 'Urgent symptoms',
-    description: 'Escalate urgent symptoms to the care team right away.',
-    href: '/messages?contact=urgent-care-team&subject=Urgent%20symptoms&body=I%20need%20urgent%20help%20from%20the%20care%20team.',
-    label: 'Escalate now',
+    title: 'Emergency escalation',
+    description: 'Use the care-coordination flow when symptoms need urgent review.',
+    href: '/emergency',
+    label: 'Open escalation',
     tone: 'warning',
   },
 ];
@@ -597,7 +604,7 @@ export const Dashboard = () => {
                     Jump into the highest-impact workflows
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-                    Messaging, reminders, refills, records, and video visits are grouped here so you can move through care in a predictable order.
+                    Messaging, reminders, refills, intake, records, and emergency escalation are grouped here so you can move through care in a predictable order.
                   </p>
                 </div>
 
