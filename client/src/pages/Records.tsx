@@ -55,7 +55,7 @@ const downloadBlob = (blob: Blob, fileName: string) => {
 
 export const Records = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'labs' | 'documents'>('labs');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'labs' | 'documents'>('inbox');
   const [labResults, setLabResults] = useState<LabResult[]>([]);
   const [documents, setDocuments] = useState<ClinicalDocument[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -87,6 +87,31 @@ export const Records = () => {
   const criticalResults = useMemo(
     () => labResults.filter((result) => result.status === 'critical').length,
     [labResults]
+  );
+  const inboxItems = useMemo(
+    () => [
+      ...labResults.map((result) => ({
+        id: `lab-${result.id}`,
+        kind: 'Lab result' as const,
+        title: result.testName,
+        subtitle: `${result.patientName || result.patientId} · ${formatDate(result.resultDate)}`,
+        tone: statusStyles[result.status],
+        description: result.notes || result.referenceRange || 'No extra notes provided.',
+      })),
+      ...documents.map((document) => ({
+        id: `doc-${document.id}`,
+        kind: 'Document' as const,
+        title: document.fileName,
+        subtitle: `${document.ownerName || document.ownerId} · ${formatDate(document.createdAt)}`,
+        tone: 'border-slate-200 bg-slate-50 text-slate-700',
+        description: document.description || document.mimeType,
+      })),
+    ].sort((left, right) => {
+      const leftDate = left.subtitle.split('·').pop()?.trim() || '';
+      const rightDate = right.subtitle.split('·').pop()?.trim() || '';
+      return rightDate.localeCompare(leftDate);
+    }),
+    [documents, labResults]
   );
 
   const loadRecords = async () => {
@@ -285,6 +310,38 @@ export const Records = () => {
           </div>
         </div>
 
+        <section className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Inbox</p>
+              <h2 className="mt-1 text-xl font-bold text-slate-900">Recent lab results and documents</h2>
+              <p className="mt-1 text-sm text-slate-500">A single feed for new results, uploaded files, and compliance review.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('inbox')}
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              View inbox
+            </button>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Critical labs</p>
+              <p className="mt-2 text-2xl font-black text-rose-700">{criticalResults}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Inbox items</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">{inboxItems.length}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Document uploads</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">{documents.length}</p>
+            </div>
+          </div>
+        </section>
+
         {error && (
           <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
@@ -298,6 +355,17 @@ export const Records = () => {
         )}
 
         <div className="mb-6 inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveTab('inbox')}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'inbox'
+                ? 'bg-[#8e171b] text-white'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          >
+            Inbox
+          </button>
           <button
             type="button"
             onClick={() => setActiveTab('labs')}
@@ -326,6 +394,53 @@ export const Records = () => {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm">
             Loading records...
           </div>
+        ) : activeTab === 'inbox' ? (
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            <section className="space-y-4">
+              {inboxItems.length > 0 ? (
+                inboxItems.map((item) => (
+                  <article key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{item.kind}</p>
+                        <h2 className="mt-1 wrap-break-word text-2xl font-bold text-slate-900">{item.title}</h2>
+                        <p className="mt-1 text-sm text-slate-500">{item.subtitle}</p>
+                      </div>
+                      <span className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-semibold ${item.tone}`}>
+                        New
+                      </span>
+                    </div>
+
+                    <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+                      {item.description}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-slate-600 shadow-sm">
+                  No inbox items yet.
+                </div>
+              )}
+            </section>
+
+            <aside className="space-y-4">
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-lg font-bold text-slate-900">Inbox guidance</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Lab results and uploaded files now land in one place so patients and clinicians can review the latest clinical updates together.
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-lg font-bold text-slate-900">Quick actions</h2>
+                <div className="mt-4 space-y-2 text-sm text-slate-600">
+                  <p>Use the Documents tab to upload outside records.</p>
+                  <p>Use the Labs tab to add provider-reviewed test results.</p>
+                  <p>Check the intake form before your next appointment.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
         ) : activeTab === 'labs' ? (
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
             <section className="space-y-4">
@@ -337,7 +452,7 @@ export const Records = () => {
                         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
                           {result.patientName || result.patientId}
                         </p>
-                        <h2 className="mt-1 break-words text-2xl font-bold text-slate-900">{result.testName}</h2>
+                        <h2 className="mt-1 wrap-break-word text-2xl font-bold text-slate-900">{result.testName}</h2>
                         <p className="mt-1 text-sm text-slate-500">
                           {formatDate(result.resultDate)} by {result.doctorName || result.doctorId}
                         </p>
@@ -352,14 +467,14 @@ export const Records = () => {
                     <div className="mt-5 grid gap-4 md:grid-cols-3">
                       <div>
                         <p className="text-sm text-slate-500">Result</p>
-                        <p className="break-words font-semibold text-slate-900">
+                        <p className="wrap-break-word font-semibold text-slate-900">
                           {result.resultValue}
                           {result.unit ? ` ${result.unit}` : ''}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm text-slate-500">Reference range</p>
-                        <p className="break-words font-semibold text-slate-900">{result.referenceRange || 'N/A'}</p>
+                        <p className="wrap-break-word font-semibold text-slate-900">{result.referenceRange || 'N/A'}</p>
                       </div>
                       <div>
                         <p className="text-sm text-slate-500">Updated</p>
@@ -508,7 +623,7 @@ export const Records = () => {
                         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
                           {document.ownerName || document.ownerId}
                         </p>
-                        <h2 className="mt-1 break-words text-xl font-bold text-slate-900">{document.fileName}</h2>
+                        <h2 className="mt-1 wrap-break-word text-xl font-bold text-slate-900">{document.fileName}</h2>
                         <p className="mt-1 text-sm text-slate-500">
                           Uploaded by {document.uploadedByName || document.uploadedById} on {formatDate(document.createdAt)}
                         </p>
@@ -526,7 +641,7 @@ export const Records = () => {
                     <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <div>
                         <p className="text-sm text-slate-500">Type</p>
-                        <p className="break-words font-semibold text-slate-900">{document.mimeType}</p>
+                        <p className="wrap-break-word font-semibold text-slate-900">{document.mimeType}</p>
                       </div>
                       <div>
                         <p className="text-sm text-slate-500">Updated</p>
@@ -580,7 +695,7 @@ export const Records = () => {
                       className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition file:mr-4 file:rounded-xl file:border-0 file:bg-[#f5f1ff] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[#6a45f0] focus:border-[#6a45f0] focus:ring-4 focus:ring-[#6a45f0]/10"
                     />
                     {selectedFile && (
-                      <p className="mt-2 break-words text-xs text-slate-500">
+                      <p className="mt-2 wrap-break-word text-xs text-slate-500">
                         {selectedFile.name} ({Math.ceil(selectedFile.size / 1024)} KB)
                       </p>
                     )}
