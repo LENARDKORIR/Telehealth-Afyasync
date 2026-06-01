@@ -44,6 +44,162 @@ const sanitizeDownloadFileName = (value) => {
   return sanitized || 'document';
 };
 
+const parseDateValue = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const toDateKey = (date) => date.toISOString().slice(0, 10);
+
+const startOfDay = (date) => {
+  const copy = new Date(date);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
+
+const addDays = (date, days) => {
+  const copy = new Date(date);
+  copy.setDate(copy.getDate() + days);
+  return copy;
+};
+
+const percentage = (part, total) => (total > 0 ? Math.round((part / total) * 100) : 0);
+
+const buildProviderAnalytics = ({ patients, appointments, records }) => {
+  const now = new Date();
+  const today = startOfDay(now);
+  const todayKey = toDateKey(today);
+  const nextDay = addDays(today, 1);
+  const last30Start = addDays(today, -30);
+  const previous30Start = addDays(today, -60);
+  const followUpGapDays = 30;
+  const followUpGapStart = addDays(today, -followUpGapDays);
+
+  const datedAppointments = appointments
+    .map((appointment) => ({
+      ...appointment,
+      date: parseDateValue(appointment.appointment_date),
+    }))
+    .filter((appointment) => appointment.date);
+
+  const appointmentsLast30 = datedAppointments.filter(
+    (appointment) => appointment.date >= last30Start && appointment.date < nextDay
+  );
+  const appointmentsPrevious30 = datedAppointments.filter(
+    (appointment) => appointment.date >= previous30Start && appointment.date < last30Start
+  );
+  const activePatients30d = new Set(appointmentsLast30.map((appointment) => appointment.patient_id)).size;
+  const previousActivePatients30d = new Set(appointmentsPrevious30.map((appointment) => appointment.patient_id)).size;
+  const activePatientChangePercent = previousActivePatients30d > 0
+    ? Math.round(((activePatients30d - previousActivePatients30d) / previousActivePatients30d) * 100)
+    : activePatients30d > 0
+      ? 100
+      : 0;
+
+  const newPatients30d = patients.filter((patient) => {
+    const createdAt = parseDateValue(patient.created_at);
+    return createdAt && createdAt >= last30Start && createdAt < nextDay;
+  }).length;
+
+  const patientVolumeTrend = Array.from({ length: 6 }, (_item, index) => {
+    const periodStart = addDays(today, -7 * (5 - index));
+    const periodEnd = addDays(periodStart, 7);
+    const bucketAppointments = datedAppointments.filter(
+      (appointment) => appointment.date >= periodStart && appointment.date < periodEnd
+    );
+
+    return {
+      label: periodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      patients: new Set(bucketAppointments.map((appointment) => appointment.patient_id)).size,
+      appointments: bucketAppointments.length,
+    };
+  });
+
+  const noShowsLast30 = appointmentsLast30.filter((appointment) => appointment.status === 'no-show');
+  const totalNoShows = datedAppointments.filter((appointment) => appointment.status === 'no-show');
+
+  const recordsByPatient = records.reduce((map, record) => {
+    const recordDate = parseDateValue(record.record_date || record.created_at);
+    if (!recordDate) return map;
+
+    const current = map.get(record.patient_id);
+    if (!current || recordDate > current) {
+      map.set(record.patient_id, recordDate);
+    }
+
+    return map;
+  }, new Map());
+
+  const appointmentsByPatient = datedAppointments.reduce((map, appointment) => {
+    const current = map.get(appointment.patient_id) || [];
+    current.push(appointment);
+    map.set(appointment.patient_id, current);
+    return map;
+  }, new Map());
+
+  const followUpGaps = patients
+    .map((patient) => {
+      const patientAppointments = appointmentsByPatient.get(patient.id) || [];
+      const upcomingAppointment = patientAppointments
+        .filter((appointment) => appointment.status === 'scheduled' && appointment.date >= today)
+        .sort((a, b) => a.date.getTime() - b.date.getTime())[0];
+
+      if (upcomingAppointment) {
+        return null;
+      }
+
+      const lastClosedAppointment = patientAppointments
+        .filter((appointment) => ['completed', 'cancelled', 'no-show'].includes(appointment.status))
+        .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+      const lastRecordDate = recordsByPatient.get(patient.id);
+      const lastAppointmentDate = lastClosedAppointment?.date || null;
+      const lastCareDate = [lastAppointmentDate, lastRecordDate]
+        .filter(Boolean)
+        .sort((a, b) => b.getTime() - a.getTime())[0];
+
+      if (!lastCareDate || lastCareDate > followUpGapStart) {
+        return null;
+      }
+
+      return {
+        patientId: patient.id,
+        patientName: patient.name,
+        lastCareDate: toDateKey(lastCareDate),
+        gapDays: Math.floor((today.getTime() - startOfDay(lastCareDate).getTime()) / 86400000),
+        lastAppointmentStatus: lastClosedAppointment?.status || null,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.gapDays - a.gapDays);
+
+  return {
+    patientVolume: {
+      totalPatients: patients.length,
+      activePatients30d,
+      previousActivePatients30d,
+      activePatientChangePercent,
+      newPatients30d,
+      appointments30d: appointmentsLast30.length,
+      trend: patientVolumeTrend,
+    },
+    noShows: {
+      count30d: noShowsLast30.length,
+      rate30d: percentage(noShowsLast30.length, appointmentsLast30.length),
+      totalCount: totalNoShows.length,
+      affectedPatients30d: new Set(noShowsLast30.map((appointment) => appointment.patient_id)).size,
+    },
+    followUpGaps: {
+      count: followUpGaps.length,
+      thresholdDays: followUpGapDays,
+      patients: followUpGaps.slice(0, 5),
+    },
+    appointmentsToday: datedAppointments.filter((appointment) => toDateKey(appointment.date) === todayKey).length,
+    totalAppointments: datedAppointments.length,
+    completedAppointments: datedAppointments.filter((appointment) => appointment.status === 'completed').length,
+  };
+};
+
 const getAuthenticatedUser = async (req, res) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.split(' ')[1];
@@ -269,20 +425,27 @@ app.get('/api/dashboard/stats', async (req, res) => {
         completedRecords: records.length,
       };
     } else {
-      // Doctor/Admin stats
-      const patientsRes = await pool.query('SELECT COUNT(*) FROM patients');
-      const appointmentsRes = await pool.query('SELECT * FROM appointments');
-      const recordsRes = await pool.query('SELECT COUNT(*) FROM medical_records');
+      const [patientsRes, appointmentsRes, recordsRes] = await Promise.all([
+        pool.query('SELECT * FROM patients'),
+        pool.query('SELECT * FROM appointments'),
+        pool.query('SELECT * FROM medical_records'),
+      ]);
 
+      const patients = patientsRes.rows || [];
       const appointments = appointmentsRes.rows || [];
+      const records = recordsRes.rows || [];
+      const analytics = buildProviderAnalytics({ patients, appointments, records });
 
       stats = {
-        totalPatients: parseInt(patientsRes.rows[0].count),
-        appointmentsToday: appointments.filter((a) => new Date(a.appointment_date).toDateString() === new Date().toDateString()).length,
-        totalAppointments: appointments.length,
-        completedAppointments: appointments.filter((a) => a.status === 'completed').length,
-        pendingReports: 0,
-        criticalCases: 0,
+        totalPatients: analytics.patientVolume.totalPatients,
+        appointmentsToday: analytics.appointmentsToday,
+        totalAppointments: analytics.totalAppointments,
+        completedAppointments: analytics.completedAppointments,
+        pendingReports: analytics.followUpGaps.count,
+        criticalCases: analytics.noShows.count30d,
+        patientVolume: analytics.patientVolume,
+        noShows: analytics.noShows,
+        followUpGaps: analytics.followUpGaps,
       };
     }
 
