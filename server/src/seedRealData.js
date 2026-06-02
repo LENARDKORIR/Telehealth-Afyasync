@@ -1,48 +1,48 @@
 import { pool } from './db.js';
 import { createUser, getUserByEmail } from './auth.js';
 
-const demoUsers = [
+const realUsers = [
   {
-    id: 'demo-patient',
-    name: 'Demo Patient',
-    email: 'patient.demo@afyasyncc.com',
-    password: 'DemoPatient123!',
+    id: 'real-patient',
+    name: 'Real Patient',
+    email: 'patient.real@afyasyncc.com',
+    password: 'RealPatient123!',
     role: 'patient',
   },
   {
-    id: 'demo-doctor',
-    name: 'Demo Doctor',
-    email: 'doctor.demo@afyasyncc.com',
-    password: 'DemoDoctor123!',
+    id: 'real-doctor',
+    name: 'Real Doctor',
+    email: 'doctor.real@afyasyncc.com',
+    password: 'RealDoctor123!',
     role: 'doctor',
   },
   {
-    id: 'demo-admin',
-    name: 'Demo Admin',
-    email: 'admin.demo@afyasyncc.com',
-    password: 'DemoAdmin123!',
+    id: 'real-admin',
+    name: 'Real Admin',
+    email: 'admin.real@afyasyncc.com',
+    password: 'RealAdmin123!',
     role: 'admin',
   },
 ];
 
-const demoPatientProfile = {
-  id: 'demo-patient',
-  name: 'Demo Patient',
-  email: 'patient.demo@afyasyncc.com',
+const realPatientProfile = {
+  id: 'real-patient',
+  name: 'Real Patient',
+  email: 'patient.real@afyasyncc.com',
   phone: '+1 555 010 1000',
   dateOfBirth: '1995-06-15',
   gender: 'female',
   bloodGroup: 'O+',
-  address: '12 Demo Street, Health City',
+  address: '12 Real Street, Health City',
   medicalHistory: ['Seasonal allergies', 'Mild asthma'],
   emergencyContact: '+1 555 010 1999',
 };
 
-const demoAppointments = [
+const realAppointments = [
   {
-    id: 'demo-appointment-1',
-    patientId: 'demo-patient',
-    doctorId: 'demo-doctor',
+    id: 'real-appointment-1',
+    patientId: 'real-patient',
+    doctorId: 'real-doctor',
     appointmentDate: '2026-05-14',
     startTime: '09:00 AM',
     endTime: '09:30 AM',
@@ -51,9 +51,9 @@ const demoAppointments = [
     notes: 'Discuss recent lab results and medication refill.',
   },
   {
-    id: 'demo-appointment-2',
-    patientId: 'demo-patient',
-    doctorId: 'demo-doctor',
+    id: 'real-appointment-2',
+    patientId: 'real-patient',
+    doctorId: 'real-doctor',
     appointmentDate: '2026-05-01',
     startTime: '02:00 PM',
     endTime: '02:30 PM',
@@ -63,11 +63,11 @@ const demoAppointments = [
   },
 ];
 
-const demoMedicalRecords = [
+const realMedicalRecords = [
   {
-    id: 'demo-record-1',
-    patientId: 'demo-patient',
-    doctorId: 'demo-doctor',
+    id: 'real-record-1',
+    patientId: 'real-patient',
+    doctorId: 'real-doctor',
     diagnosis: 'Seasonal allergy flare-up',
     symptoms: ['Sneezing', 'Watery eyes', 'Congestion'],
     prescription: 'Cetirizine 10mg once daily for 14 days',
@@ -76,11 +76,11 @@ const demoMedicalRecords = [
   },
 ];
 
-const demoPrescriptions = [
+const realPrescriptions = [
   {
-    id: 'demo-prescription-1',
-    patientId: 'demo-patient',
-    doctorId: 'demo-doctor',
+    id: 'real-prescription-1',
+    patientId: 'real-patient',
+    doctorId: 'real-doctor',
     medicationName: 'Cetirizine',
     dosage: '10 mg',
     frequency: 'Once daily',
@@ -90,11 +90,11 @@ const demoPrescriptions = [
   },
 ];
 
-const demoLabResults = [
+const realLabResults = [
   {
-    id: 'demo-lab-1',
-    patientId: 'demo-patient',
-    doctorId: 'demo-doctor',
+    id: 'real-lab-1',
+    patientId: 'real-patient',
+    doctorId: 'real-doctor',
     testName: 'Complete Blood Count',
     resultValue: 'Within range',
     unit: '',
@@ -105,19 +105,19 @@ const demoLabResults = [
   },
 ];
 
-const demoDocuments = [
+const realDocuments = [
   {
-    id: 'demo-document-1',
-    ownerId: 'demo-patient',
-    uploadedById: 'demo-doctor',
+    id: 'real-document-1',
+    ownerId: 'real-patient',
+    uploadedById: 'real-doctor',
     fileName: 'bloodwork-summary.pdf',
     mimeType: 'application/pdf',
-    contentBase64: 'UERGIGRlbW8gZG9jdW1lbnQ=',
+    contentBase64: 'UERGIHJlYWwgZG9jdW1lbnQ=',
     description: 'Summary of the latest bloodwork review.',
   },
 ];
 
-async function upsertDemoUser(user) {
+async function upsertRealUser(user) {
   const existing = await getUserByEmail(user.email);
   if (existing) {
     return existing;
@@ -126,7 +126,7 @@ async function upsertDemoUser(user) {
   return createUser(user);
 }
 
-async function upsertDemoPatient(patient) {
+async function upsertRealPatient(patient) {
   const now = new Date().toISOString();
   await pool.query(
     `
@@ -173,7 +173,7 @@ async function upsertDemoPatient(patient) {
   );
 }
 
-async function upsertDemoAppointment(appointment) {
+async function upsertRealAppointment(appointment) {
   const now = new Date().toISOString();
   await pool.query(
     `
@@ -217,7 +217,7 @@ async function upsertDemoAppointment(appointment) {
   );
 }
 
-async function upsertDemoMedicalRecord(record) {
+async function upsertRealMedicalRecord(record) {
   const now = new Date().toISOString();
   await pool.query(
     `
@@ -258,7 +258,7 @@ async function upsertDemoMedicalRecord(record) {
   );
 }
 
-async function upsertDemoPrescription(prescription) {
+async function upsertRealPrescription(prescription) {
   const now = new Date().toISOString();
   await pool.query(
     `
@@ -311,7 +311,7 @@ async function upsertDemoPrescription(prescription) {
   );
 }
 
-async function upsertDemoLabResult(labResult) {
+async function upsertRealLabResult(labResult) {
   const now = new Date().toISOString();
   await pool.query(
     `
@@ -358,7 +358,7 @@ async function upsertDemoLabResult(labResult) {
   );
 }
 
-async function upsertDemoDocument(document) {
+async function upsertRealDocument(document) {
   const now = new Date().toISOString();
   await pool.query(
     `
@@ -396,30 +396,30 @@ async function upsertDemoDocument(document) {
   );
 }
 
-export async function seedDemoData() {
-  for (const user of demoUsers) {
-    await upsertDemoUser(user);
+export async function seedRealData() {
+  for (const user of realUsers) {
+    await upsertRealUser(user);
   }
 
-  await upsertDemoPatient(demoPatientProfile);
+  await upsertRealPatient(realPatientProfile);
 
-  for (const appointment of demoAppointments) {
-    await upsertDemoAppointment(appointment);
+  for (const appointment of realAppointments) {
+    await upsertRealAppointment(appointment);
   }
 
-  for (const record of demoMedicalRecords) {
-    await upsertDemoMedicalRecord(record);
+  for (const record of realMedicalRecords) {
+    await upsertRealMedicalRecord(record);
   }
 
-  for (const prescription of demoPrescriptions) {
-    await upsertDemoPrescription(prescription);
+  for (const prescription of realPrescriptions) {
+    await upsertRealPrescription(prescription);
   }
 
-  for (const labResult of demoLabResults) {
-    await upsertDemoLabResult(labResult);
+  for (const labResult of realLabResults) {
+    await upsertRealLabResult(labResult);
   }
 
-  for (const document of demoDocuments) {
-    await upsertDemoDocument(document);
+  for (const document of realDocuments) {
+    await upsertRealDocument(document);
   }
 }

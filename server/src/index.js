@@ -15,7 +15,7 @@ import { listAuditEvents, logAuditEvent } from './audit.js';
 import { createMessage, listMessageThread, listUnreadMessages, markMessageThreadRead } from './messages.js';
 import { getPrescriptionById, listPrescriptions, listPrescriptionsByPatient, markPrescriptionRefilled, requestRefill } from './prescriptions.js';
 import { createDocument, createLabResult, getDocumentById, listDocuments, listDocumentsByOwner, listLabResults, listLabResultsByPatient } from './records.js';
-import { seedDemoData } from './seedDemoData.js';
+import { seedRealData } from './seedRealData.js';
 
 dotenv.config();
 
@@ -1288,7 +1288,7 @@ app.post('/api/messages', async (req, res) => {
 async function start() {
   try {
     await ensureDatabaseSchema();
-    await seedDemoData();
+    await seedRealData();
 
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);
