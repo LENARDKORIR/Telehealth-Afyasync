@@ -847,6 +847,55 @@ app.get('/api/appointments/:id', async (req, res) => {
   }
 });
 
+app.post('/api/appointments/request', async (req, res) => {
+  try {
+    const user = await getAuthenticatedUser(req, res);
+    if (!user) {
+      return;
+    }
+
+    if (user.role !== 'patient') {
+      return res.status(403).json({ message: 'Only patients can request appointments' });
+    }
+
+    const { doctorId, appointmentDate, startTime, endTime, reason, notes } = req.body;
+    if (!doctorId || !appointmentDate || !startTime || !reason) {
+      return res.status(400).json({ message: 'Doctor, date, time, and reason are required' });
+    }
+
+    const appointment = await createAppointment({
+      id: `appointment-request-${Date.now()}`,
+      patientId: user.id,
+      doctorId,
+      appointmentDate,
+      startTime,
+      endTime: endTime || startTime,
+      status: 'scheduled',
+      reason,
+      notes,
+    });
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'request',
+      entityType: 'appointment',
+      entityId: appointment.id,
+      details: {
+        patientId: appointment.patientId,
+        doctorId: appointment.doctorId,
+        appointmentDate: appointment.appointmentDate,
+        status: appointment.status,
+      },
+    });
+
+    return res.status(201).json({ data: appointment });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to request appointment' });
+  }
+});
+
 app.post('/api/appointments', async (req, res) => {
   try {
     const appointment = await createAppointment(req.body);

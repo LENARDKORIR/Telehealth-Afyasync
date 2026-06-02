@@ -495,19 +495,19 @@ export const Dashboard = () => {
       return;
     }
 
+    setRequestError('');
+    setRequestMessage('');
     setSubmitting(true);
 
     try {
-      await api.post('/appointments', {
-        id: `appointment-${Date.now()}`,
-        patientId: user.id,
+      await api.post('/appointments/request', {
         doctorId: selectedDoctor.id,
         appointmentDate: requestForm.date,
         startTime: requestForm.time,
         endTime: addOneHour(requestForm.time),
-        status: 'scheduled',
         reason: requestForm.reason,
         notes: [
+          'Patient appointment request',
           `Specialty: ${selectedDoctor.specialty}`,
           `Preferred doctor: ${selectedDoctor.name}`,
           requestForm.notes ? `Notes: ${requestForm.notes}` : '',
