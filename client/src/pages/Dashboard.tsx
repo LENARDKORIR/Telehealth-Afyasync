@@ -549,6 +549,14 @@ export const Dashboard = () => {
           <p className="text-gray-600">
             Role: <span className="font-semibold capitalize">{user?.role}</span>
           </p>
+          {user?.role === 'patient' && (
+            <a
+              href="#appointment-request"
+              className="mt-4 inline-flex items-center justify-center rounded-2xl bg-[#8e171b] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#741215]"
+            >
+              Request appointment
+            </a>
+          )}
         </div>
 
         <section className="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-md sm:p-8">
@@ -586,7 +594,10 @@ export const Dashboard = () => {
 
         {user?.role === 'patient' ? (
           <>
-            <div className="mb-8 grid gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-md lg:grid-cols-[1fr_1.2fr] lg:p-8">
+            <div
+              id="appointment-request"
+              className="mb-8 grid gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-md lg:grid-cols-[1fr_1.2fr] lg:p-8"
+            >
               <div className="space-y-4">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#6a45f0]">
