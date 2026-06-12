@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "cd client && npm install && npm run build"
+  },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",
     "axios": "^1.16.0",
