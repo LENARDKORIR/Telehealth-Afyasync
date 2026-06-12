@@ -5,9 +5,9 @@ services:
     env: node
     repoName: LENARDKORIR/Telehealth-Afyasync
     plan: free
-    root: .
-    buildCommand: cd server && npm ci
-    startCommand: cd server && npm start
+    root: server
+    buildCommand: npm ci
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,9 +19,9 @@ services:
     env: static
     repoName: LENARDKORIR/Telehealth-Afyasync
     plan: free
-    root: .
-    buildCommand: cd client && npm ci && npm run build
-    publishPath: client/dist
+    root: client
+    buildCommand: npm ci && npm run build
+    publishPath: dist
     envVars:
       - key: VITE_API_URL
         value: https://afyasyncc-api.onrender.com/api
