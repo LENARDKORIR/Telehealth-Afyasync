@@ -21,6 +21,7 @@ import { Emergency } from '../pages/Emergency';
 import { HealthTopic } from '../pages/HealthTopic';
 import { Reports } from '../pages/Reports';
 import { Settings } from '../pages/Settings';
+import { CarePlans } from '../pages/CarePlans';
 
 export const AppRoutes = () => {
   return (
@@ -112,6 +113,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="doctor">
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/care-plans"
+        element={
+          <ProtectedRoute>
+            <CarePlans />
           </ProtectedRoute>
         }
       />

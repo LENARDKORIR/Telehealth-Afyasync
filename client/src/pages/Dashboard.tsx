@@ -163,6 +163,13 @@ const patientCareSteps: PatientCareStep[] = [
     tone: 'secondary',
   },
   {
+    title: 'Care plans',
+    description: 'Track follow-up tasks, recovery steps, and treatment milestones in one place.',
+    href: '/care-plans',
+    label: 'View plans',
+    tone: 'tertiary',
+  },
+  {
     title: 'Video visits',
     description: 'Join your next telehealth appointment from the waiting room.',
     href: '/appointments',

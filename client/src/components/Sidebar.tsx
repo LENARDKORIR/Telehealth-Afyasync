@@ -15,6 +15,7 @@ const NAVIGATION_ITEMS = [
   { path: '/records', label: 'Records', icon: 'R', roles: ['admin', 'doctor', 'patient'] },
   { path: '/emergency', label: 'Emergency', icon: '🚨', roles: ['admin', 'doctor', 'patient'] },
   { path: '/reports', label: 'Reports', icon: '📄', roles: ['admin', 'doctor'] },
+  { path: '/care-plans', label: 'Care Plans', icon: '🩺', roles: ['admin', 'doctor', 'patient'] },
   { path: '/settings', label: 'Settings', icon: '⚙️', roles: ['admin', 'doctor', 'patient'] },
 ];
 
