@@ -1,0 +1,27 @@
+{
+  "name": "afyasyncc-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js",
+    "test": "mocha --exit"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.0",
+    "pg": "^8.16.3",
+    "pdfkit": "^0.13.0",
+    "pg-query-stream": "^4.0.0"
+  }
+  ,
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "supertest": "^6.3.3",
+    "chai": "^4.3.7"
+  }
+}

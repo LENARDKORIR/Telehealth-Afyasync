@@ -1,0 +1,58 @@
+<svg width="100%" viewBox="0 0 680 320" role="img" xmlns="http://www.w3.org/2000/svg" style="">
+  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Secure Telehealth Portal – Logo</title>
+  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Professional logo with a shield-cross-sync mark and clean typographic lockup.</desc>
+
+  <defs>
+    
+  </defs>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ICON MARK  (centred at 160, 160)       -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- Outer soft ring -->
+  <circle cx="160" cy="155" r="78" fill="#E1F5EE" opacity="0.35" style="fill:rgb(225, 245, 238);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.35;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Shield body — flat-bottom pentagon -->
+  <path d="M160 72&#10;           L218 96&#10;           L218 168&#10;           Q218 210 160 232&#10;           Q102 210 102 168&#10;           L102 96 Z" style="fill:rgb(29, 158, 117);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Shield rim highlight -->
+  <path d="M160 76&#10;           L214 99&#10;           L214 168&#10;           Q214 207 160 228&#10;           Q106 207 106 168&#10;           L106 99 Z" style="fill:none;stroke:rgb(159, 225, 203);color:rgb(255, 255, 255);stroke-width:1.2px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Horizontal ECG / pulse line across shield -->
+  <polyline stroke-width="2.2" points="118,155 132,155 138,133 145,177 151,144 157,155 202,155" style="fill:none;stroke:rgb(225, 245, 238);color:rgb(255, 255, 255);stroke-width:2.2px;stroke-linecap:round;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- Dot at end of pulse -->
+  <circle cx="202" cy="155" r="3.5" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Medical cross — subtly offset upward -->
+  <rect x="149" y="163" width="22" height="52" rx="4" opacity="0.18" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.18;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <rect x="138" y="174" width="44" height="22" rx="4" opacity="0.18" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.18;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Lock silhouette at shield base -->
+  <rect x="153" y="208" width="14" height="11" rx="3" fill="#04342C" opacity="0.55" style="fill:rgb(4, 52, 44);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.55;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path d="M156 208 Q156 203 160 203 Q164 203 164 208" fill="none" stroke="#04342C" stroke-width="1.8" stroke-linecap="round" opacity="0.55" style="fill:none;stroke:rgb(4, 52, 44);color:rgb(255, 255, 255);stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.55;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Sync arcs — bottom-right -->
+  <circle cx="214" cy="210" r="3.5" opacity="0.9" style="fill:rgb(255, 255, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.9;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path stroke-width="2.2" opacity="0.8" d="M204 200 Q214 194 224 200" style="fill:none;stroke:rgb(225, 245, 238);color:rgb(255, 255, 255);stroke-width:2.2px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.8;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path stroke-width="1.8" opacity="0.5" d="M198 193 Q214 185 230 193" style="fill:none;stroke:rgb(225, 245, 238);color:rgb(255, 255, 255);stroke-width:1.8px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.5;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  WORDMARK                               -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- SECURE -->
+  <text x="268" y="128" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="46" letter-spacing="-1" style="fill:rgb(4, 52, 44);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Helvetica Neue&quot;, Arial, sans-serif;font-size:46px;font-weight:700;text-anchor:start;dominant-baseline:auto">SECURE</text>
+
+  <!-- TELEHEALTH -->
+  <text x="268" y="178" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="300" font-size="46" letter-spacing="2" style="fill:rgb(29, 158, 117);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Helvetica Neue&quot;, Arial, sans-serif;font-size:46px;font-weight:300;text-anchor:start;dominant-baseline:auto">TELEHEALTH</text>
+
+  <!-- Rule + PORTAL row -->
+  <line x1="268" y1="196" x2="588" y2="196" style="fill:rgb(0, 0, 0);stroke:rgb(159, 225, 203);color:rgb(255, 255, 255);stroke-width:0.75px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <text x="268" y="220" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="17" letter-spacing="9" style="fill:rgb(15, 110, 86);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Helvetica Neue&quot;, Arial, sans-serif;font-size:17px;font-weight:400;text-anchor:start;dominant-baseline:auto">PORTAL</text>
+
+  <!-- Tagline -->
+  <text x="268" y="248" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="400" font-size="12" letter-spacing="3.5" style="fill:rgb(29, 158, 117);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Helvetica Neue&quot;, Arial, sans-serif;font-size:12px;font-weight:400;text-anchor:start;dominant-baseline:auto">OFFLINE · SECURE · ALWAYS ON</text>
+
+</svg>
