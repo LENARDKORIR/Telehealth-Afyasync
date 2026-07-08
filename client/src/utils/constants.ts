@@ -6,6 +6,8 @@ const rawApiBaseUrl = import.meta.env.VITE_API_URL?.trim();
 
 const DEFAULT_PROD_API_BASE_URL = "https://telehealth-afyasync.onrender.com/api";
 
+const stripTrailingHealthSegment = (value: string): string => value.replace(/\/health\/?$/i, '');
+
 const normalizeApiBaseUrl = (value: string): string => {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -65,6 +67,7 @@ if (!rawApiBaseUrl && !isLocalHost && import.meta.env.DEV) {
 }
 
 export const API_BASE_URL = resolvedApiBaseUrl;
+export const AUTH_API_BASE_URL = stripTrailingHealthSegment(resolvedApiBaseUrl);
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Secure Telehealth Portal';
 
 // Token storage keys

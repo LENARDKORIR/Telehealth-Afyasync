@@ -236,6 +236,14 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/api/health/')) {
+    req.url = req.url.replace(/^\/api\/health(?=\/)/, '/api');
+  }
+
+  next();
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,

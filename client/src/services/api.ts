@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 import type { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { API_BASE_URL, TOKEN_KEY, REFRESH_TOKEN_KEY, ENDPOINTS } from '../utils/constants';
+import { API_BASE_URL, AUTH_API_BASE_URL, TOKEN_KEY, REFRESH_TOKEN_KEY, ENDPOINTS } from '../utils/constants';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -48,7 +48,7 @@ api.interceptors.response.use(
         // Try to refresh token
         const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
         if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}${ENDPOINTS.REFRESH_TOKEN}`, {
+          const response = await axios.post(`${AUTH_API_BASE_URL}${ENDPOINTS.REFRESH_TOKEN}`, {
             refreshToken,
           });
 
