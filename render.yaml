@@ -1,7 +1,7 @@
 # render.yaml - blueprint to create API and frontend services on Render
 services:
   - type: web
-    name: afyasyncc-api
+    name: telehealth-afyasync
     env: node
     repoName: LENARDKORIR/Telehealth-Afyasync
     plan: free
@@ -24,4 +24,4 @@ services:
     publishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://afyasyncc-api.onrender.com/api
+        value: https://telehealth-afyasync.onrender.com/api

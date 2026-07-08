@@ -1,29 +1,45 @@
-import dotenv from 'dotenv';
+import './env.js';
 import pg from 'pg';
-
-dotenv.config();
 
 const { Pool } = pg;
 
 const connectionString = process.env.DATABASE_URL;
+export const hasDatabaseConfig = Boolean(connectionString);
 
-if (!connectionString) {
-  throw new Error('DATABASE_URL is missing. Add it to server/.env or deployment environment variables.');
-}
+const createMissingDatabaseUrlError = () =>
+  new Error('DATABASE_URL is missing. Add it to server/.env or deployment environment variables.');
 
 // Keep current SSL behavior, but opt into libpq compatibility to avoid the pg warning.
-const urlWithSSL = connectionString.includes('uselibpqcompat=true')
-  ? connectionString
-  : connectionString + (connectionString.includes('?') ? '&' : '?') + 'uselibpqcompat=true';
+const urlWithSSL = connectionString
+  ? connectionString.includes('uselibpqcompat=true')
+    ? connectionString
+    : connectionString + (connectionString.includes('?') ? '&' : '?') + 'uselibpqcompat=true'
+  : '';
 
-export const pool = new Pool({
-  connectionString: urlWithSSL,
-  ssl: {
-    rejectUnauthorized: false,
+const unavailablePool = {
+  async query() {
+    throw createMissingDatabaseUrlError();
   },
-});
+  async connect() {
+    throw createMissingDatabaseUrlError();
+  },
+  async end() {},
+};
+
+export const pool = hasDatabaseConfig
+  ? new Pool({
+      connectionString: urlWithSSL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    })
+  : unavailablePool;
 
 export async function ensureDatabaseSchema() {
+  if (!hasDatabaseConfig) {
+    throw createMissingDatabaseUrlError();
+  }
+
   await pool.query(`
     CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
   `);

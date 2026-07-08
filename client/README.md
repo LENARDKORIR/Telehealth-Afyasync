@@ -31,9 +31,9 @@ VITE_ENCRYPTION_KEY=your-encryption-key-here-change-in-production
 
 Use `/api` during local development so the Vite proxy forwards requests to the backend. If you deploy the frontend and backend separately, replace it with the full backend URL for that environment.
 
-For Vercel deployments, set `VITE_API_URL` in Project Settings to your backend URL (example: `https://afyasyncc-api.onrender.com/api`). If you leave it unset, browser calls to `/api/*` may return 404 when no rewrite/proxy is configured.
+For Vercel deployments, set `VITE_API_URL` in Project Settings to your backend URL (example: `https://telehealth-afyasync.onrender.com/api`). If you leave it unset, browser calls to `/api/*` may return 404 when no rewrite/proxy is configured.
 
-This project also includes `vercel.json` with a rewrite from `/api/*` to `https://afyasyncc-api.onrender.com/api/*` and a `.env.production` default for `VITE_API_URL`.
+This project also includes `vercel.json` with a rewrite from `/api/*` to `https://telehealth-afyasync.onrender.com/api/*` and a `.env.production` default for `VITE_API_URL`.
 
 ## Project Structure
 

@@ -28,12 +28,18 @@ const hashPassword = async (password: string): Promise<string> => {
   return btoa(password);
 };
 
-const isNetworkFailure = (error: unknown) => {
+const isOfflineFallbackError = (error: unknown) => {
   if (typeof error !== 'object' || error === null) {
     return false;
   }
 
-  return !(error as { response?: unknown }).response;
+  const response = (error as { response?: { status?: number } }).response;
+  if (!response) {
+    return true;
+  }
+
+  const status = response.status;
+  return status === 404 || status === 408 || status === 429 || (status !== undefined && status >= 500);
 };
 
 const persistSession = (user: User, token: string, refreshToken?: string) => {
@@ -82,7 +88,7 @@ export const authService = {
 
       return response.data;
     } catch (error) {
-      if (!isNetworkFailure(error)) {
+      if (!isOfflineFallbackError(error)) {
         throw error;
       }
 
@@ -120,7 +126,7 @@ export const authService = {
 
       return response.data;
     } catch (error) {
-      if (!isNetworkFailure(error)) {
+      if (!isOfflineFallbackError(error)) {
         throw error;
       }
 

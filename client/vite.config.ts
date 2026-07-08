@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'https://telehealth-afyasync.onrender.com'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -121,8 +123,9 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
+        secure: true,
       },
     },
   },

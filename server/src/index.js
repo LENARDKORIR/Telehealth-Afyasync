@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import { serverRoot } from './env.js';
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import PDFDocument from 'pdfkit';
 import QueryStream from 'pg-query-stream';
-import { ensureDatabaseSchema, pool } from './db.js';
+import { ensureDatabaseSchema, hasDatabaseConfig, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
 import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, verifyToken } from './auth.js';
 import { createAppointment, deleteAppointment, getAppointmentById, listAppointments, listAppointmentsByPatient, updateAppointment } from './appointments.js';
@@ -16,8 +16,6 @@ import { createMessage, listMessageThread, listUnreadMessages, markMessageThread
 import { getPrescriptionById, listPrescriptions, listPrescriptionsByPatient, markPrescriptionRefilled, requestRefill } from './prescriptions.js';
 import { createDocument, createLabResult, getDocumentById, listDocuments, listDocumentsByOwner, listLabResults, listLabResultsByPatient } from './records.js';
 import { seedRealData } from './seedRealData.js';
-
-dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT) || 8000;
@@ -246,6 +244,14 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/api/db-test', async (_req, res) => {
+  if (!hasDatabaseConfig) {
+    return res.status(503).json({
+      ok: false,
+      database: 'not_configured',
+      message: 'DATABASE_URL is missing. Add it to server/.env or deployment environment variables.',
+    });
+  }
+
   try {
     const result = await pool.query('SELECT NOW() AS now');
     res.json({
@@ -391,7 +397,7 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 // Serve generated exports
-const exportsDir = path.join(process.cwd(), 'server', 'public', 'exports');
+const exportsDir = path.join(serverRoot, 'public', 'exports');
 fs.mkdirSync(exportsDir, { recursive: true });
 app.use('/exports', express.static(exportsDir));
 
@@ -1347,8 +1353,12 @@ app.post('/api/messages', async (req, res) => {
 
 async function start() {
   try {
-    await ensureDatabaseSchema();
-    await seedRealData();
+    if (hasDatabaseConfig) {
+      await ensureDatabaseSchema();
+      await seedRealData();
+    } else {
+      console.warn('DATABASE_URL is missing. Starting API without database-backed routes.');
+    }
 
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);

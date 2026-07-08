@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://afyasyncc-api.onrender.com/api/$1"
+      "destination": "https://telehealth-afyasync.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",

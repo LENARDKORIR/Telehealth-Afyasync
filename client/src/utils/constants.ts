@@ -4,15 +4,57 @@
 
 const rawApiBaseUrl = import.meta.env.VITE_API_URL?.trim();
 
-const DEFAULT_PROD_API_BASE_URL = 'https://afyasyncc-api.onrender.com/api';
+const DEFAULT_PROD_API_BASE_URL = "https://telehealth-afyasync.onrender.com/api";
 
-const isLocalhostUrl = (value: string) => /^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?\/api\/?$/i.test(value);
+const normalizeApiBaseUrl = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '/api';
+  }
+
+  const withoutHash = trimmed.split('#')[0].split('?')[0].replace(/\/+$/, '');
+  const lowerValue = withoutHash.toLowerCase();
+
+  if (lowerValue.startsWith('postgres://') || lowerValue.startsWith('postgresql://')) {
+    return DEFAULT_PROD_API_BASE_URL;
+  }
+
+  if (/^https?:\/\//i.test(withoutHash)) {
+    try {
+      const url = new URL(withoutHash);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        return DEFAULT_PROD_API_BASE_URL;
+      }
+
+      const segments = url.pathname.split('/').filter(Boolean);
+      const apiIndex = segments.findIndex((segment) => segment.toLowerCase() === 'api');
+
+      if (apiIndex >= 0) {
+        url.pathname = `/${segments.slice(0, apiIndex + 1).join('/')}`;
+        return url.toString().replace(/\/$/, '');
+      }
+
+      return `${url.origin}/api`;
+    } catch {
+      return DEFAULT_PROD_API_BASE_URL;
+    }
+  }
+
+  const segments = withoutHash.split('/').filter(Boolean);
+  const apiIndex = segments.findIndex((segment) => segment.toLowerCase() === 'api');
+
+  if (apiIndex >= 0) {
+    return `/${segments.slice(0, apiIndex + 1).join('/')}`;
+  }
+
+  return '/api';
+};
 
 const isBrowser = typeof window !== 'undefined';
 const isLocalHost = isBrowser && ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
-const resolvedApiBaseUrl = rawApiBaseUrl && !isLocalhostUrl(rawApiBaseUrl)
-  ? rawApiBaseUrl
+const resolvedApiBaseUrl = rawApiBaseUrl
+  ? normalizeApiBaseUrl(rawApiBaseUrl)
   : isLocalHost
     ? '/api'
     : DEFAULT_PROD_API_BASE_URL;
