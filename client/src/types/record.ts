@@ -48,3 +48,12 @@ export interface CreateDocumentPayload {
   contentBase64: string;
   description?: string;
 }
+
+export interface CareTimelineItem {
+  id: string;
+  type: 'appointment' | 'medical_record' | 'lab_result' | 'document' | 'prescription';
+  title: string;
+  subtitle: string;
+  date: string;
+  details?: string;
+}

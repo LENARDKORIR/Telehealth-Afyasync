@@ -21,6 +21,7 @@ import { Emergency } from '../pages/Emergency';
 import { HealthTopic } from '../pages/HealthTopic';
 import { Reports } from '../pages/Reports';
 import { Settings } from '../pages/Settings';
+import { SystemStatus } from '../pages/SystemStatus';
 
 export const AppRoutes = () => {
   return (
@@ -120,6 +121,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/system-status"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <SystemStatus />
           </ProtectedRoute>
         }
       />

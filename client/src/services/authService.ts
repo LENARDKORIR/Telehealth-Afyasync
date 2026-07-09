@@ -172,6 +172,19 @@ export const authService = {
     }
   },
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await api.post(ENDPOINTS.CHANGE_PASSWORD, { currentPassword, newPassword });
+  },
+
+  async requestPasswordReset(email: string): Promise<{ message: string; resetToken?: string }> {
+    const response = await api.post<{ message: string; resetToken?: string }>(ENDPOINTS.PASSWORD_RESET_REQUEST, { email });
+    return response.data;
+  },
+
+  async confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+    await api.post(ENDPOINTS.PASSWORD_RESET_CONFIRM, { token, newPassword });
+  },
+
   /**
    * Get current user
    */

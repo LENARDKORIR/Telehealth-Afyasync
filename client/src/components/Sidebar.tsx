@@ -6,16 +6,17 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const NAVIGATION_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: '📊', roles: ['admin', 'doctor', 'patient'] },
-  { path: '/patients', label: 'Patients', icon: '👥', roles: ['admin', 'doctor'] },
-  { path: '/appointments', label: 'Appointments', icon: '📅', roles: ['admin', 'doctor', 'patient'] },
-  { path: '/messages', label: 'Messages', icon: '💬', roles: ['admin', 'doctor', 'patient'] },
-  { path: '/intake', label: 'Intake', icon: '📝', roles: ['admin', 'doctor', 'patient'] },
-  { path: '/prescriptions', label: 'Prescriptions', icon: '💊', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/dashboard', label: 'Dashboard', icon: 'D', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/patients', label: 'Patients', icon: 'P', roles: ['admin', 'doctor'] },
+  { path: '/appointments', label: 'Appointments', icon: 'A', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/messages', label: 'Messages', icon: 'M', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/intake', label: 'Intake', icon: 'I', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/prescriptions', label: 'Prescriptions', icon: 'Rx', roles: ['admin', 'doctor', 'patient'] },
   { path: '/records', label: 'Records', icon: 'R', roles: ['admin', 'doctor', 'patient'] },
-  { path: '/emergency', label: 'Emergency', icon: '🚨', roles: ['admin', 'doctor', 'patient'] },
-  { path: '/reports', label: 'Reports', icon: '📄', roles: ['admin', 'doctor'] },
-  { path: '/settings', label: 'Settings', icon: '⚙️', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/emergency', label: 'Emergency', icon: '!', roles: ['admin', 'doctor', 'patient'] },
+  { path: '/reports', label: 'Reports', icon: 'Re', roles: ['admin', 'doctor'] },
+  { path: '/system-status', label: 'System', icon: 'S', roles: ['admin'] },
+  { path: '/settings', label: 'Settings', icon: 'Se', roles: ['admin', 'doctor', 'patient'] },
 ];
 
 interface SidebarProps {
@@ -50,7 +51,9 @@ export const Sidebar = ({ isOpen, onNavigate }: SidebarProps) => {
             }
             onClick={onNavigate}
           >
-            <span className="text-xl">{item.icon}</span>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 text-xs font-bold">
+              {item.icon}
+            </span>
             <span>{item.label}</span>
           </NavLink>
         ))}

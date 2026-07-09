@@ -80,12 +80,20 @@ export async function ensureDatabaseSchema() {
       appointment_date TEXT NOT NULL,
       start_time TEXT NOT NULL,
       end_time TEXT NOT NULL,
-      status TEXT NOT NULL CHECK (status IN ('scheduled', 'completed', 'cancelled', 'no-show')),
+      status TEXT NOT NULL CHECK (status IN ('requested', 'scheduled', 'completed', 'cancelled', 'rejected', 'no-show')),
       reason TEXT NOT NULL,
       notes TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `);
+  await pool.query(`
+    ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_status_check;
+  `);
+  await pool.query(`
+    ALTER TABLE appointments
+    ADD CONSTRAINT appointments_status_check
+    CHECK (status IN ('requested', 'scheduled', 'completed', 'cancelled', 'rejected', 'no-show'));
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS medical_records (
@@ -170,6 +178,16 @@ export async function ensureDatabaseSchema() {
       description TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
 }

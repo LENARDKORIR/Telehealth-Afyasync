@@ -83,7 +83,7 @@ describe('Appointment requests', () => {
       appointmentDate: '2026-06-10',
       startTime: '09:00',
       endTime: '10:00',
-      status: 'scheduled',
+      status: 'requested',
       reason: 'Follow-up care',
     });
   });

@@ -2,6 +2,7 @@ import api from './api';
 import { ENDPOINTS } from '../utils/constants';
 import type {
   ClinicalDocument,
+  CareTimelineItem,
   CreateDocumentPayload,
   CreateLabResultPayload,
   LabResult,
@@ -33,5 +34,10 @@ export const recordsService = {
       responseType: 'blob',
     });
     return response.data;
+  },
+
+  async getCareTimeline(patientId: string): Promise<CareTimelineItem[]> {
+    const response = await api.get<{ data: CareTimelineItem[] }>(ENDPOINTS.CARE_TIMELINE(patientId));
+    return response.data.data || [];
   },
 };

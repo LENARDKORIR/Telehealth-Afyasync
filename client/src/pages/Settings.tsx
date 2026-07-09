@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { useAuth } from '../hooks/useAuth';
+import { authService } from '../services/authService';
 
 type LanguageCode = 'en' | 'sw' | 'fr' | 'es';
 type ReminderChannel = 'in-app' | 'sms' | 'email';
@@ -60,6 +61,14 @@ export const Settings = () => {
   const { user } = useAuth();
   const [preferences, setPreferences] = useState<UserPreferences>(() => loadPreferences(user?.id));
   const [savedMessage, setSavedMessage] = useState('');
+  const [securityMessage, setSecurityMessage] = useState('');
+  const [securityError, setSecurityError] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
   useEffect(() => {
     setPreferences(loadPreferences(user?.id));
@@ -77,6 +86,35 @@ export const Settings = () => {
     }
 
     setSavedMessage('Preferences saved locally for this browser session.');
+  };
+
+  const handlePasswordChange = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (passwordForm.newPassword.length < 8) {
+      setSecurityError('Use at least 8 characters for the new password.');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setSecurityError('The new passwords do not match.');
+      return;
+    }
+
+    setChangingPassword(true);
+    setSecurityError('');
+    setSecurityMessage('');
+
+    try {
+      await authService.changePassword(passwordForm.currentPassword, passwordForm.newPassword);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSecurityMessage('Password changed successfully.');
+    } catch (error) {
+      console.error('Failed to change password:', error);
+      setSecurityError('Unable to change the password. Check your current password and try again.');
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -266,6 +304,64 @@ export const Settings = () => {
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <h2 className="text-xl font-bold text-slate-900">Account security</h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Change your password with server-side verification of your current password.
+            </p>
+
+            {securityMessage && (
+              <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {securityMessage}
+              </div>
+            )}
+
+            {securityError && (
+              <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {securityError}
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordChange} className="mt-5 grid gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Current password</label>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#6a45f0] focus:ring-4 focus:ring-[#6a45f0]/10"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">New password</label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#6a45f0] focus:ring-4 focus:ring-[#6a45f0]/10"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Confirm password</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-[#6a45f0] focus:ring-4 focus:ring-[#6a45f0]/10"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="inline-flex items-center justify-center rounded-2xl bg-[#8e171b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#741215] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {changingPassword ? 'Changing password...' : 'Change password'}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-xl font-bold text-slate-900">General preferences</h2>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
@@ -318,12 +414,6 @@ export const Settings = () => {
                 className="inline-flex items-center justify-center rounded-2xl bg-[#8e171b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#741215]"
               >
                 Save preferences
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Change password
               </button>
             </div>
           </section>

@@ -99,6 +99,9 @@ export const ENDPOINTS = {
   REGISTER: '/auth/register',
   REFRESH_TOKEN: '/auth/refresh',
   LOGOUT: '/auth/logout',
+  CHANGE_PASSWORD: '/auth/change-password',
+  PASSWORD_RESET_REQUEST: '/auth/password-reset/request',
+  PASSWORD_RESET_CONFIRM: '/auth/password-reset/confirm',
 
   // Patients
   PATIENTS: '/patients',
@@ -108,6 +111,8 @@ export const ENDPOINTS = {
   // Appointments
   APPOINTMENTS: '/appointments',
   APPOINTMENT_DETAIL: (id: string) => `/appointments/${id}`,
+  APPOINTMENT_APPROVE: (id: string) => `/appointments/${id}/approve`,
+  APPOINTMENT_REJECT: (id: string) => `/appointments/${id}/reject`,
 
   // Messages
   MESSAGES_THREAD: (otherUserId: string) => `/messages/thread/${otherUserId}`,
@@ -127,9 +132,11 @@ export const ENDPOINTS = {
   LAB_RESULTS: '/lab-results',
   DOCUMENTS: '/documents',
   DOCUMENT_DOWNLOAD: (id: string) => `/documents/${id}/download`,
+  CARE_TIMELINE: (patientId: string) => `/care-timeline/${patientId}`,
 
   // Dashboard
   DASHBOARD_STATS: '/dashboard/stats',
+  SYSTEM_STATUS: '/system/status',
 };
 
 // Roles

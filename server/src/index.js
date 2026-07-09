@@ -8,7 +8,18 @@ import PDFDocument from 'pdfkit';
 import QueryStream from 'pg-query-stream';
 import { ensureDatabaseSchema, hasDatabaseConfig, pool } from './db.js';
 import { createPatient, deletePatient, getPatientById, listPatients, updatePatient } from './patients.js';
-import { createUser, getUserByEmail, verifyPassword, signToken, getUserById, verifyToken } from './auth.js';
+import {
+  createPasswordResetToken,
+  createUser,
+  getUserByEmail,
+  resetPasswordWithToken,
+  signToken,
+  updateUserPassword,
+  verifyPassword,
+  verifyToken,
+  verifyUserPassword,
+  getUserById,
+} from './auth.js';
 import { createAppointment, deleteAppointment, getAppointmentById, listAppointments, listAppointmentsByPatient, updateAppointment } from './appointments.js';
 import { createMedicalRecord, deleteMedicalRecord, getRecordById, listMedicalRecordsByPatient, updateMedicalRecord } from './medicalRecords.js';
 import { listAuditEvents, logAuditEvent } from './audit.js';
@@ -63,6 +74,7 @@ const addDays = (date, days) => {
 };
 
 const percentage = (part, total) => (total > 0 ? Math.round((part / total) * 100) : 0);
+const withoutUndefinedValues = (value) => Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined));
 
 const buildProviderAnalytics = ({ patients, appointments, records }) => {
   const now = new Date();
@@ -222,6 +234,100 @@ const getAuthenticatedUser = async (req, res) => {
   return user;
 };
 
+const requireAuthenticatedUser = async (req, res) => getAuthenticatedUser(req, res);
+
+const requireRole = async (req, res, roles) => {
+  const user = await getAuthenticatedUser(req, res);
+  if (!user) return null;
+
+  if (!roles.includes(user.role)) {
+    res.status(403).json({ message: 'Forbidden' });
+    return null;
+  }
+
+  return user;
+};
+
+const isCareTeam = (user) => user && ['doctor', 'admin'].includes(user.role);
+
+const assertAppointmentAccess = (user, appointment) => {
+  if (isCareTeam(user)) return true;
+  return appointment.patientId === user.id;
+};
+
+const buildCareTimeline = async (patientId) => {
+  const [appointmentsRes, recordsRes, labsRes, documentsRes, prescriptionsRes] = await Promise.all([
+    pool.query(
+      `SELECT id, appointment_date AS event_date, start_time, status, reason, notes, created_at
+       FROM appointments WHERE patient_id = $1`,
+      [patientId]
+    ),
+    pool.query(
+      `SELECT id, record_date AS event_date, diagnosis, notes, created_at
+       FROM medical_records WHERE patient_id = $1`,
+      [patientId]
+    ),
+    pool.query(
+      `SELECT id, result_date AS event_date, test_name, result_value, status, notes, created_at
+       FROM lab_results WHERE patient_id = $1`,
+      [patientId]
+    ),
+    pool.query(
+      `SELECT id, created_at AS event_date, file_name, description, mime_type, created_at
+       FROM documents WHERE owner_id = $1`,
+      [patientId]
+    ),
+    pool.query(
+      `SELECT id, created_at AS event_date, medication_name, dosage, status, instructions, created_at
+       FROM prescriptions WHERE patient_id = $1`,
+      [patientId]
+    ),
+  ]);
+
+  return [
+    ...appointmentsRes.rows.map((item) => ({
+      id: `appointment-${item.id}`,
+      type: 'appointment',
+      title: item.reason,
+      subtitle: `${item.status} at ${item.start_time}`,
+      date: item.event_date,
+      details: item.notes || '',
+    })),
+    ...recordsRes.rows.map((item) => ({
+      id: `record-${item.id}`,
+      type: 'medical_record',
+      title: item.diagnosis,
+      subtitle: 'Clinical note',
+      date: item.event_date,
+      details: item.notes || '',
+    })),
+    ...labsRes.rows.map((item) => ({
+      id: `lab-${item.id}`,
+      type: 'lab_result',
+      title: item.test_name,
+      subtitle: `${item.status}: ${item.result_value}`,
+      date: item.event_date,
+      details: item.notes || '',
+    })),
+    ...documentsRes.rows.map((item) => ({
+      id: `document-${item.id}`,
+      type: 'document',
+      title: item.file_name,
+      subtitle: item.mime_type,
+      date: item.event_date,
+      details: item.description || '',
+    })),
+    ...prescriptionsRes.rows.map((item) => ({
+      id: `prescription-${item.id}`,
+      type: 'prescription',
+      title: item.medication_name,
+      subtitle: `${item.dosage} - ${item.status}`,
+      date: item.event_date,
+      details: item.instructions || '',
+    })),
+  ].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
+};
+
 const corsOptions = {
   origin: true,
   credentials: true,
@@ -251,6 +357,43 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+app.get('/api/system/status', async (req, res) => {
+  try {
+    const user = await requireRole(req, res, ['admin']);
+    if (!user) return;
+
+    let database = 'not_configured';
+    let databaseTime = null;
+    if (hasDatabaseConfig) {
+      const result = await pool.query('SELECT NOW() AS now');
+      database = 'connected';
+      databaseTime = result.rows[0].now;
+    }
+
+    const auditRes = hasDatabaseConfig
+      ? await pool.query('SELECT created_at FROM audit_logs ORDER BY created_at DESC LIMIT 1')
+      : { rows: [] };
+    const documentRes = hasDatabaseConfig
+      ? await pool.query('SELECT COUNT(*)::int AS count FROM documents')
+      : { rows: [{ count: 0 }] };
+
+    return res.json({
+      data: {
+        api: 'online',
+        database,
+        databaseTime,
+        lastAuditEventAt: auditRes.rows[0]?.created_at || null,
+        documentCount: documentRes.rows[0]?.count || 0,
+        videoProvider: process.env.VIDEO_PROVIDER || 'demo',
+        smsProvider: process.env.SMS_PROVIDER || 'not_configured',
+        pwa: 'client-managed',
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch system status' });
+  }
+});
+
 app.get('/api/db-test', async (_req, res) => {
   if (!hasDatabaseConfig) {
     return res.status(503).json({
@@ -276,8 +419,11 @@ app.get('/api/db-test', async (_req, res) => {
   }
 });
 
-app.get('/api/patients', async (_req, res) => {
+app.get('/api/patients', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const patients = await listPatients();
     res.json({ data: patients });
   } catch (error) {
@@ -289,6 +435,12 @@ app.get('/api/patients', async (_req, res) => {
 
 app.get('/api/patients/:id', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+    if (!isCareTeam(user) && user.id !== req.params.id) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const patient = await getPatientById(req.params.id);
 
     if (!patient) {
@@ -305,9 +457,15 @@ app.get('/api/patients/:id', async (req, res) => {
 
 app.post('/api/patients', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const patient = await createPatient(req.body);
     void logAuditEvent({
       action: 'create',
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       entityType: 'patient',
       entityId: patient.id,
       details: { name: patient.name, email: patient.email },
@@ -376,6 +534,92 @@ app.post('/api/auth/refresh', async (req, res) => {
     return res.json({ success: true, token, refreshToken: token, user, message: 'Token refreshed' });
   } catch (error) {
     return res.status(500).json({ message: error instanceof Error ? error.message : 'Refresh failed' });
+  }
+});
+
+app.post('/api/auth/change-password', async (req, res) => {
+  try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: 'Current password and a new password of at least 8 characters are required' });
+    }
+
+    const currentPasswordValid = await verifyUserPassword(user.id, currentPassword);
+    if (!currentPasswordValid) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+
+    await updateUserPassword(user.id, newPassword);
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'update',
+      entityType: 'auth',
+      entityId: user.id,
+      details: { field: 'password' },
+    });
+
+    return res.json({ success: true, message: 'Password changed' });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Password change failed' });
+  }
+});
+
+app.post('/api/auth/password-reset/request', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const reset = await createPasswordResetToken(email);
+    if (reset) {
+      void logAuditEvent({
+        actorId: reset.user.id,
+        actorName: reset.user.name,
+        actorRole: reset.user.role,
+        action: 'request',
+        entityType: 'password_reset',
+        entityId: reset.user.id,
+        details: { expiresAt: reset.expiresAt },
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'If that account exists, reset instructions have been prepared.',
+      resetToken: process.env.NODE_ENV === 'production' ? undefined : reset?.token,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Password reset request failed' });
+  }
+});
+
+app.post('/api/auth/password-reset/confirm', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: 'Reset token and a new password of at least 8 characters are required' });
+    }
+
+    const user = await resetPasswordWithToken(token, newPassword);
+    if (!user) return res.status(400).json({ message: 'Invalid or expired reset token' });
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'complete',
+      entityType: 'password_reset',
+      entityId: user.id,
+      details: {},
+    });
+
+    return res.json({ success: true, message: 'Password reset complete' });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Password reset failed' });
   }
 });
 
@@ -790,6 +1034,12 @@ app.get('/api/audit-logs/stream', async (req, res) => {
 
 app.get('/api/patients/:id/records', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+    if (!isCareTeam(user) && user.id !== req.params.id) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const records = await listMedicalRecordsByPatient(req.params.id);
     res.json({ data: records });
   } catch (error) {
@@ -799,6 +1049,9 @@ app.get('/api/patients/:id/records', async (req, res) => {
 
 app.put('/api/patients/:id', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const patient = await updatePatient(req.params.id, req.body);
 
     if (!patient) {
@@ -807,6 +1060,9 @@ app.put('/api/patients/:id', async (req, res) => {
 
     void logAuditEvent({
       action: 'update',
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       entityType: 'patient',
       entityId: patient.id,
       details: { name: patient.name, email: patient.email },
@@ -822,6 +1078,9 @@ app.put('/api/patients/:id', async (req, res) => {
 
 app.delete('/api/patients/:id', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['admin']);
+    if (!user) return;
+
     const deleted = await deletePatient(req.params.id);
 
     if (!deleted) {
@@ -830,6 +1089,9 @@ app.delete('/api/patients/:id', async (req, res) => {
 
     void logAuditEvent({
       action: 'delete',
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       entityType: 'patient',
       entityId: req.params.id,
       details: {},
@@ -844,10 +1106,17 @@ app.delete('/api/patients/:id', async (req, res) => {
 });
 
 // Patient-specific appointments
-app.get('/api/appointments', async (_req, res) => {
+app.get('/api/appointments', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+    if (!isCareTeam(user)) {
+      const appointments = await listAppointmentsByPatient(user.id);
+      return res.json({ data: appointments });
+    }
+
     const appointments = await listAppointments();
-    res.json({ data: appointments });
+    return res.json({ data: appointments });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch appointments' });
   }
@@ -855,6 +1124,12 @@ app.get('/api/appointments', async (_req, res) => {
 
 app.get('/api/appointments/patient/:patientId', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+    if (!isCareTeam(user) && user.id !== req.params.patientId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const appointments = await listAppointmentsByPatient(req.params.patientId);
     res.json({ data: appointments });
   } catch (error) {
@@ -864,8 +1139,15 @@ app.get('/api/appointments/patient/:patientId', async (req, res) => {
 
 app.get('/api/appointments/:id', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+
     const appointment = await getAppointmentById(req.params.id);
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+    if (!assertAppointmentAccess(user, appointment)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     res.json({ data: appointment });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch appointment' });
@@ -895,7 +1177,7 @@ app.post('/api/appointments/request', async (req, res) => {
       appointmentDate,
       startTime,
       endTime: endTime || startTime,
-      status: 'scheduled',
+      status: 'requested',
       reason,
       notes,
     });
@@ -921,10 +1203,73 @@ app.post('/api/appointments/request', async (req, res) => {
   }
 });
 
+app.put('/api/appointments/:id/approve', async (req, res) => {
+  try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
+    const appointment = await updateAppointment(req.params.id, withoutUndefinedValues({
+      status: 'scheduled',
+      appointmentDate: req.body?.appointmentDate,
+      startTime: req.body?.startTime,
+      endTime: req.body?.endTime,
+      notes: req.body?.notes,
+    }));
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'approve',
+      entityType: 'appointment',
+      entityId: appointment.id,
+      details: { patientId: appointment.patientId, doctorId: appointment.doctorId },
+    });
+
+    return res.json({ data: appointment });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to approve appointment' });
+  }
+});
+
+app.put('/api/appointments/:id/reject', async (req, res) => {
+  try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
+    const appointment = await updateAppointment(req.params.id, withoutUndefinedValues({
+      status: 'rejected',
+      notes: req.body?.notes,
+    }));
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
+
+    void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
+      action: 'reject',
+      entityType: 'appointment',
+      entityId: appointment.id,
+      details: { patientId: appointment.patientId, doctorId: appointment.doctorId },
+    });
+
+    return res.json({ data: appointment });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to reject appointment' });
+  }
+});
+
 app.post('/api/appointments', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const appointment = await createAppointment(req.body);
     void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       action: 'create',
       entityType: 'appointment',
       entityId: appointment.id,
@@ -943,9 +1288,30 @@ app.post('/api/appointments', async (req, res) => {
 
 app.put('/api/appointments/:id', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+
+    const existing = await getAppointmentById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Appointment not found' });
+    if (!assertAppointmentAccess(user, existing)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (!isCareTeam(user)) {
+      const allowedKeys = new Set(['status']);
+      const bodyKeys = Object.keys(req.body || {});
+      const patientCanCancelOwnVisit = bodyKeys.every((key) => allowedKeys.has(key)) && req.body.status === 'cancelled';
+      if (!patientCanCancelOwnVisit) {
+        return res.status(403).json({ message: 'Patients can only cancel their own appointments' });
+      }
+    }
+
     const appointment = await updateAppointment(req.params.id, req.body);
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' });
     void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       action: 'update',
       entityType: 'appointment',
       entityId: appointment.id,
@@ -964,9 +1330,15 @@ app.put('/api/appointments/:id', async (req, res) => {
 
 app.delete('/api/appointments/:id', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const deleted = await deleteAppointment(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Appointment not found' });
     void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       action: 'delete',
       entityType: 'appointment',
       entityId: req.params.id,
@@ -981,6 +1353,12 @@ app.delete('/api/appointments/:id', async (req, res) => {
 // Patient-specific medical records
 app.get('/api/medical-records/patient/:patientId', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+    if (!isCareTeam(user) && user.id !== req.params.patientId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     const records = await listMedicalRecordsByPatient(req.params.patientId);
     res.json({ data: records });
   } catch (error) {
@@ -990,8 +1368,15 @@ app.get('/api/medical-records/patient/:patientId', async (req, res) => {
 
 app.get('/api/medical-records/:id', async (req, res) => {
   try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+
     const record = await getRecordById(req.params.id);
     if (!record) return res.status(404).json({ message: 'Medical record not found' });
+    if (!isCareTeam(user) && record.patientId !== user.id) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
     res.json({ data: record });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch medical record' });
@@ -1000,8 +1385,14 @@ app.get('/api/medical-records/:id', async (req, res) => {
 
 app.post('/api/medical-records', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const record = await createMedicalRecord(req.body);
     void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       action: 'create',
       entityType: 'medical_record',
       entityId: record.id,
@@ -1015,9 +1406,15 @@ app.post('/api/medical-records', async (req, res) => {
 
 app.put('/api/medical-records/:id', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const record = await updateMedicalRecord(req.params.id, req.body);
     if (!record) return res.status(404).json({ message: 'Medical record not found' });
     void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       action: 'update',
       entityType: 'medical_record',
       entityId: record.id,
@@ -1031,9 +1428,15 @@ app.put('/api/medical-records/:id', async (req, res) => {
 
 app.delete('/api/medical-records/:id', async (req, res) => {
   try {
+    const user = await requireRole(req, res, ['doctor', 'admin']);
+    if (!user) return;
+
     const deleted = await deleteMedicalRecord(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Medical record not found' });
     void logAuditEvent({
+      actorId: user.id,
+      actorName: user.name,
+      actorRole: user.role,
       action: 'delete',
       entityType: 'medical_record',
       entityId: req.params.id,
@@ -1203,6 +1606,21 @@ app.get('/api/documents/:id/download', async (req, res) => {
     return res.send(fileBuffer);
   } catch (error) {
     return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to download document' });
+  }
+});
+
+app.get('/api/care-timeline/:patientId', async (req, res) => {
+  try {
+    const user = await requireAuthenticatedUser(req, res);
+    if (!user) return;
+    if (!isCareTeam(user) && user.id !== req.params.patientId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const data = await buildCareTimeline(req.params.patientId);
+    return res.json({ data });
+  } catch (error) {
+    return res.status(500).json({ message: error instanceof Error ? error.message : 'Failed to fetch care timeline' });
   }
 });
 

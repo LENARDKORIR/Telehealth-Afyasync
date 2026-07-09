@@ -42,6 +42,8 @@ const formatCountdown = (milliseconds: number) => {
   return `${hours} hour${hours === 1 ? '' : 's'}${remainingMinutes ? ` ${remainingMinutes} min` : ''}`;
 };
 
+const videoProvider = import.meta.env.VITE_VIDEO_PROVIDER || 'demo';
+
 export const VideoVisit = () => {
   const { appointmentId } = useParams();
   const { user } = useAuth();
@@ -317,6 +319,15 @@ export const VideoVisit = () => {
           </section>
 
           <aside className="space-y-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Video provider</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {videoProvider === 'demo'
+                  ? 'Demo room is active. Configure VITE_VIDEO_PROVIDER and server provider keys before using live calls.'
+                  : `${videoProvider} integration is selected for live video visits.`}
+              </p>
+            </div>
+
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Visit status</p>
               <div className="mt-4 space-y-3 text-sm text-slate-700">

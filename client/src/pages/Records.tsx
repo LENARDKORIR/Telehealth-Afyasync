@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { patientService } from '../services/patientService';
 import { recordsService } from '../services/recordsService';
 import type { Patient } from '../types/patient';
-import type { ClinicalDocument, LabResult, LabResultStatus } from '../types/record';
+import type { CareTimelineItem, ClinicalDocument, LabResult, LabResultStatus } from '../types/record';
 import { getPatientLanguagePack } from '../utils/patientLanguage';
 
 const today = new Date().toISOString().slice(0, 10);
@@ -57,9 +57,10 @@ const downloadBlob = (blob: Blob, fileName: string) => {
 export const Records = () => {
   const { user } = useAuth();
   const languagePack = getPatientLanguagePack(user?.id);
-  const [activeTab, setActiveTab] = useState<'inbox' | 'labs' | 'documents'>('inbox');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'inbox' | 'labs' | 'documents'>('inbox');
   const [labResults, setLabResults] = useState<LabResult[]>([]);
   const [documents, setDocuments] = useState<ClinicalDocument[]>([]);
+  const [timelineItems, setTimelineItems] = useState<CareTimelineItem[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingLab, setSavingLab] = useState(false);
@@ -140,6 +141,14 @@ export const Records = () => {
         ...current,
         ownerId: current.ownerId || (canChooseDocumentOwner ? defaultPatientId : user?.id || ''),
       }));
+
+      const timelinePatientId = canChooseDocumentOwner ? defaultPatientId : user?.id || '';
+      if (timelinePatientId) {
+        const timeline = await recordsService.getCareTimeline(timelinePatientId);
+        setTimelineItems(timeline);
+      } else {
+        setTimelineItems([]);
+      }
     } catch (loadError) {
       console.error('Failed to load records:', loadError);
       setError('Unable to load records right now.');
@@ -359,6 +368,17 @@ export const Records = () => {
         <div className="mb-6 inline-flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
           <button
             type="button"
+            onClick={() => setActiveTab('timeline')}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'timeline'
+                ? 'bg-[#8e171b] text-white'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+            }`}
+          >
+            Timeline
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('inbox')}
             className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
               activeTab === 'inbox'
@@ -395,6 +415,45 @@ export const Records = () => {
         {loading ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm">
             Loading records...
+          </div>
+        ) : activeTab === 'timeline' ? (
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+            <section className="space-y-4">
+              {timelineItems.length > 0 ? (
+                timelineItems.map((item) => (
+                  <article key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          {item.type.replace('_', ' ')}
+                        </p>
+                        <h2 className="mt-1 wrap-break-word text-xl font-bold text-slate-900">{item.title}</h2>
+                        <p className="mt-1 text-sm text-slate-500">{item.subtitle}</p>
+                      </div>
+                      <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+                        {formatDate(item.date)}
+                      </span>
+                    </div>
+                    {item.details && (
+                      <p className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+                        {item.details}
+                      </p>
+                    )}
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 text-center text-slate-600 shadow-sm">
+                  No timeline items yet.
+                </div>
+              )}
+            </section>
+
+            <aside className="rounded-3xl border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-600 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900">Care timeline</h2>
+              <p className="mt-2">
+                Appointments, records, labs, documents, and prescriptions are merged here for faster clinical review.
+              </p>
+            </aside>
           </div>
         ) : activeTab === 'inbox' ? (
           <div className="grid gap-6 lg:grid-cols-[1fr_360px]">

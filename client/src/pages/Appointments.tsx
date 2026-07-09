@@ -10,7 +10,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import api from '../services/api';
 import { getPatientLanguagePack } from '../utils/patientLanguage';
 
-type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+type AppointmentStatus = 'requested' | 'scheduled' | 'completed' | 'cancelled' | 'rejected' | 'no-show';
 
 interface Appointment {
   id: string;
@@ -59,10 +59,14 @@ const getStatusColor = (status: AppointmentStatus) => {
   switch (status) {
     case 'scheduled':
       return 'bg-blue-100 text-blue-800';
+    case 'requested':
+      return 'bg-purple-100 text-purple-800';
     case 'completed':
       return 'bg-green-100 text-green-800';
     case 'cancelled':
       return 'bg-red-100 text-red-800';
+    case 'rejected':
+      return 'bg-slate-100 text-slate-700';
     case 'no-show':
       return 'bg-yellow-100 text-yellow-800';
     default:
@@ -386,6 +390,44 @@ export const Appointments = () => {
     }
   };
 
+  const approveAppointment = async (appointment: Appointment) => {
+    setSavingId(appointment.id);
+    setStatusError('');
+    setStatusMessage('');
+
+    try {
+      await api.put(`/appointments/${appointment.id}/approve`, {});
+      setStatusMessage('Appointment request approved.');
+      await loadAppointments();
+      void refreshNotifications();
+    } catch (error) {
+      console.error('Failed to approve appointment:', error);
+      setStatusError('Unable to approve the appointment request right now.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const rejectAppointment = async (appointment: Appointment) => {
+    setSavingId(appointment.id);
+    setStatusError('');
+    setStatusMessage('');
+
+    try {
+      await api.put(`/appointments/${appointment.id}/reject`, {
+        notes: appointment.notes ? `${appointment.notes}\nRequest rejected by care team.` : 'Request rejected by care team.',
+      });
+      setStatusMessage('Appointment request rejected.');
+      await loadAppointments();
+      void refreshNotifications();
+    } catch (error) {
+      console.error('Failed to reject appointment:', error);
+      setStatusError('Unable to reject the appointment request right now.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const deleteAppointment = async (appointment: Appointment) => {
     const confirmed = window.confirm('Delete this appointment permanently?');
     if (!confirmed) return;
@@ -507,6 +549,14 @@ export const Appointments = () => {
                   </button>
                 )}
 
+                {appointment.status === 'requested' && (
+                  <div className="mb-4 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-800">
+                    {isDoctorView
+                      ? 'This patient request is waiting for care-team approval.'
+                      : 'Your request is waiting for the care team to approve or reschedule it.'}
+                  </div>
+                )}
+
                 <div className="mb-4 grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
@@ -581,6 +631,26 @@ export const Appointments = () => {
 
                 {isDoctorView && (
                   <div className="space-y-3">
+                    {appointment.status === 'requested' && (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={() => approveAppointment(appointment)}
+                          disabled={savingId === appointment.id}
+                          className="inline-flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Approve request
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => rejectAppointment(appointment)}
+                          disabled={savingId === appointment.id}
+                          className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Reject request
+                        </button>
+                      </div>
+                    )}
                     {editingAppointmentId === appointment.id ? (
                       <div className="space-y-3 rounded-2xl border border-[#6a45f0]/20 bg-[#f7f4ff] p-4">
                         <div className="grid gap-3 sm:grid-cols-2">
